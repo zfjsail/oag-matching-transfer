@@ -46,7 +46,7 @@ parser.add_argument('--max-key-sequence-length', type=int, default=8,
 parser.add_argument('--batch', type=int, default=32, help="Batch size")
 parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
 parser.add_argument('--file-dir', type=str, default=settings.VENUE_DATA_DIR, help="Input file directory")
-parser.add_argument('--entity-type', type=str, default="author", help="entity type to match")
+parser.add_argument('--entity-type', type=str, default="paper", help="entity type to match")
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")

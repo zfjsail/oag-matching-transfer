@@ -75,8 +75,10 @@ class AuthorCNNMatchDataset(Dataset):
 
         self.N = len(self.Y)
 
-        valid_start = int(self.N * args.train_ratio / 100)
-        test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
+        # valid_start = int(self.N * args.train_ratio / 100)
+        # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
+        valid_start = 800
+        test_start = 200
 
         train_data = {}
         train_data["x1"] = self.X_long[:valid_start]
@@ -204,8 +206,10 @@ class AuthorRNNMatchDataset(Dataset):
 
         self.N = len(self.labels)
 
-        valid_start = int(self.N * args.train_ratio / 100)
-        test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
+        # valid_start = int(self.N * args.train_ratio / 100)
+        # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
+        valid_start = 800
+        test_start = 200
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:valid_start]
