@@ -74,7 +74,8 @@ class PaperCNNMatchDataset(Dataset):
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
         valid_start = 800
-        test_start = 200
+        test_start = 200 + valid_start
+        end_point = 200 + test_start
 
         train_data = {}
         train_data["x1"] = self.X_title[:valid_start]
@@ -83,9 +84,9 @@ class PaperCNNMatchDataset(Dataset):
         print("train labels", len(train_data["y"]))
 
         test_data = {}
-        test_data["x1"] = self.X_title[test_start:]
-        test_data["x2"] = self.X_author[test_start:]
-        test_data["y"] = self.Y[test_start:]
+        test_data["x1"] = self.X_title[test_start: end_point]
+        test_data["x2"] = self.X_author[test_start: end_point]
+        test_data["y"] = self.Y[test_start: end_point]
         print("test labels", len(test_data["y"]))
 
         valid_data = {}
@@ -200,7 +201,8 @@ class PaperRNNMatchDataset(Dataset):
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
         valid_start = 800
-        test_start = 200
+        test_start = 200 + valid_start
+        end_point = 200 + test_start
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:valid_start]
@@ -212,11 +214,11 @@ class PaperRNNMatchDataset(Dataset):
         print("train labels", len(train_data["y"]))
 
         test_data = {}
-        test_data["x1_seq1"] = self.mag[test_start:]
-        test_data["x1_seq2"] = self.mag_keywords[test_start:]
-        test_data["x2_seq1"] = self.aminer[test_start:]
-        test_data["x2_seq2"] = self.aminer_keywords[test_start:]
-        test_data["y"] = self.labels[test_start:]
+        test_data["x1_seq1"] = self.mag[test_start: end_point]
+        test_data["x1_seq2"] = self.mag_keywords[test_start: end_point]
+        test_data["x2_seq1"] = self.aminer[test_start: end_point]
+        test_data["x2_seq2"] = self.aminer_keywords[test_start: end_point]
+        test_data["y"] = self.labels[test_start: end_point]
         print("test labels", len(test_data["y"]))
 
         valid_data = {}
