@@ -1,8 +1,9 @@
 import io
+import sys
 from os.path import join
 import json
 import pickle
-
+import torch
 from torch.utils.data.sampler import Sampler
 
 import logging
@@ -60,6 +61,21 @@ def load_large_obj(rfdir, rfname):
         obj = pickle.load(rf)
         logger.info('%s loaded', rfname)
         return obj
+
+
+def say(s, stream=sys.stdout):
+    stream.write("{}".format(s))
+    stream.flush()
+
+
+def softmax(data):
+    ''' Element-wise normalization over a list of FloatTensors
+
+        Arguments:
+            - data: list of FloatTensors with the same length
+    '''
+    data_exp = [ torch.exp(x) for x in data ]
+    return [ x / sum(data_exp) for x in data_exp ]
 
 
 class ChunkSampler(Sampler):
