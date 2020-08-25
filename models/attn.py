@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -15,4 +16,16 @@ class MulInteractAttention(nn.Module):
         hidden1 = self.fc_1(src_hidden)
         hidden2 = self.fc_2(dst_hidden)
         out = self.fc_out(hidden1 * hidden2)
+        return out
+
+
+class OneHotAttention(nn.Module):
+
+    def __init__(self, n_sources):
+        super(OneHotAttention, self).__init__()
+        self.att_weight = nn.Linear(n_sources, 1, bias=False)
+        self.att_weight.weight = nn.Parameter(torch.ones(size=(1, n_sources)), requires_grad=True)
+
+    def forward(self, hidden):
+        out = self.att_weight(hidden)
         return out

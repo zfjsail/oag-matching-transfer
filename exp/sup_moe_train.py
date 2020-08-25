@@ -19,7 +19,7 @@ from utils.data_utils import say, softmax
 from dataset import ProcessedCNNInputDataset, ProcessedRNNInputDataset
 from models.cnn import CNNMatchModel
 from models.rnn import BiLSTM
-from models.attn import MulInteractAttention
+from models.attn import MulInteractAttention, OneHotAttention
 
 from utils import settings
 
@@ -126,6 +126,8 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
                 outputs_dst_transfer.append(cur_output)
                 cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
                 cur_one_hot_sources[:, src_i] = 1
+                if args.cuda:
+                    cur_one_hot_sources.cuda()
                 one_hot_sources.append(cur_one_hot_sources)
 
             source_ids = range(n_sources)
@@ -189,6 +191,8 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
                 outputs_dst_transfer.append(cur_output)
                 cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
                 cur_one_hot_sources[:, src_i] = 1
+                if args.cuda:
+                    cur_one_hot_sources.cuda()
                 one_hot_sources.append(cur_one_hot_sources)
 
             source_ids = range(n_sources)
@@ -327,6 +331,8 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
             outputs_dst_transfer.append(cur_output)
             cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
             cur_one_hot_sources[:, src_i] = 1
+            if args.cuda:
+                cur_one_hot_sources.cuda()
             one_hot_sources.append(cur_one_hot_sources)
 
         optim_model.zero_grad()
@@ -491,9 +497,11 @@ def train(args):
         classifiers.append(classifier)
 
         if args.attn_type == "onehot":
-            cur_att_weight = nn.Linear(len(encoders_src), 1, bias=False)
-            cur_att_weight.weight = nn.Parameter(torch.ones(size=(1, len(encoders_src))), requires_grad=True)
-            attn_mats.append(cur_att_weight)
+            # cur_att_weight = nn.Linear(len(encoders_src), 1, bias=False)
+            # cur_att_weight.weight = nn.Parameter(torch.ones(size=(1, len(encoders_src))), requires_grad=True)
+            attn_mats.append(
+                OneHotAttention(n_sources=len(encoders_src))
+            )
         elif args.attn_type == "cor":
             attn_mats.append(
                 MulInteractAttention(encoders_src[0].n_out, 16)
@@ -503,8 +511,8 @@ def train(args):
 
     if args.cuda:
         map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats)
-        encoder_dst_pretrain.cuda()
-        print("here")
+        # encoder_dst_pretrain.cuda()
+        # print("here")
 
     for i, classifier in enumerate(classifiers):
         say("Classifier-{}: {}\n".format(i, classifier))
