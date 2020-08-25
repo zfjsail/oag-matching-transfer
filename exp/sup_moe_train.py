@@ -127,7 +127,9 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
                 cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
                 cur_one_hot_sources[:, src_i] = 1
                 if args.cuda:
-                    cur_one_hot_sources.cuda()
+                    pass
+                    cur_one_hot_sources = cur_one_hot_sources.to(device="cuda")
+                    # cur_one_hot_sources.cuda()
                 one_hot_sources.append(cur_one_hot_sources)
 
             source_ids = range(n_sources)
@@ -192,7 +194,9 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
                 cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
                 cur_one_hot_sources[:, src_i] = 1
                 if args.cuda:
-                    cur_one_hot_sources.cuda()
+                    cur_one_hot_sources = cur_one_hot_sources.to(device="cuda")
+                    pass
+                    # cur_one_hot_sources.cuda()
                 one_hot_sources.append(cur_one_hot_sources)
 
             source_ids = range(n_sources)
@@ -332,7 +336,9 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
             cur_one_hot_sources = torch.zeros(size=(bs, n_sources))
             cur_one_hot_sources[:, src_i] = 1
             if args.cuda:
-                cur_one_hot_sources.cuda()
+                # cur_one_hot_sources.cuda()  wrong
+                cur_one_hot_sources = cur_one_hot_sources.to(device="cuda")
+                pass
             one_hot_sources.append(cur_one_hot_sources)
 
         optim_model.zero_grad()
@@ -515,6 +521,7 @@ def train(args):
         [e.cuda() for e in encoders_src]
         [c.cuda() for c in classifiers]
         [a.cuda() for a in attn_mats]
+        print("device", next(attn_mats[2].parameters()))
         # print("here")
 
     for i, classifier in enumerate(classifiers):
