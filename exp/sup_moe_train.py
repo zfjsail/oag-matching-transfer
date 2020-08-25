@@ -275,7 +275,7 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
 
     encoders, encoder_dst = encoders
 
-    map(lambda m: m.train(), classifiers + encoders + attn_mats)
+    map(lambda m: m.train(), classifiers + encoders + attn_mats + [encoder_dst])
 
     moe_criterion = nn.NLLLoss()  # with log_softmax separated
     entropy_criterion = HLoss()
@@ -502,7 +502,9 @@ def train(args):
             raise NotImplementedError
 
     if args.cuda:
-        map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats + [encoder_dst_pretrain])
+        map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats)
+        encoder_dst_pretrain.cuda()
+        print("here")
 
     for i, classifier in enumerate(classifiers):
         say("Classifier-{}: {}\n".format(i, classifier))
