@@ -511,7 +511,10 @@ def train(args):
 
     if args.cuda:
         map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats)
-        # encoder_dst_pretrain.cuda()
+        encoder_dst_pretrain.cuda()
+        [e.cuda() for e in encoders_src]
+        [c.cuda() for c in classifiers]
+        [a.cuda() for a in attn_mats]
         # print("here")
 
     for i, classifier in enumerate(classifiers):
