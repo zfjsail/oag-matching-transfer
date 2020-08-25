@@ -502,7 +502,7 @@ def train(args):
             raise NotImplementedError
 
     if args.cuda:
-        map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats)
+        map(lambda m: m.cuda(), classifiers + encoders_src + attn_mats + [encoder_dst_pretrain])
 
     for i, classifier in enumerate(classifiers):
         say("Classifier-{}: {}\n".format(i, classifier))
