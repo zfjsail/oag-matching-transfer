@@ -39,7 +39,7 @@ argparser.add_argument("--max_epoch", type=int, default=200)
 argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
-argparser.add_argument("--base_model", type=str, default="cnn")
+argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
 
 argparser.add_argument('--embedding-size', type=int, default=128,
@@ -593,11 +593,11 @@ def train(args):
             best_test_results = metrics_test
             weights_sources = [alpha_weights_val, alpha_weights_test]
             torch.save([classifiers, attn_mats],
-                       os.path.join(model_dir, "{}_{}_moe_attn_{}_seed_{}_best_now.mdl".format(
-                           args.test, args.base_model, args.attn_type, args.seed_delta)))
+                       os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_seed_{}_best_now.mdl".format(
+                           args.test, args.base_model, args.attn_type, n_sources, args.seed_delta)))
 
-    with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_seed_{}_results.txt".format(
-            args.test, args.base_model, args.attn_type, args.seed_delta)), "w") as wf:
+    with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_seed_{}_results.txt".format(
+            args.test, args.base_model, args.attn_type, n_sources, args.seed_delta)), "w") as wf:
         wf.write(
             "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
                 min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
