@@ -116,7 +116,7 @@ class ProcessedCNNInputDataset(Dataset):
 
 class ProcessedRNNInputDataset(Dataset):
 
-    def __init__(self, entity_type, role):
+    def __init__(self, entity_type, role, sample_num=None):
 
         data_dir = settings.DOM_ADAPT_DIR
         fname = "{}_rnn_{}.pkl".format(entity_type, role)
@@ -129,11 +129,16 @@ class ProcessedRNNInputDataset(Dataset):
 
         self.N = len(self.y)
 
-        self.x1_seq1 = torch.from_numpy(self.x1_seq1)
-        self.x1_seq2 = torch.from_numpy(self.x1_seq2)
-        self.x2_seq1 = torch.from_numpy(self.x2_seq1)
-        self.x2_seq2 = torch.from_numpy(self.x2_seq2)
-        self.y = torch.from_numpy(self.y)
+        if sample_num is None:
+            sample_num = self.N
+
+        self.x1_seq1 = torch.from_numpy(self.x1_seq1)[:sample_num]
+        self.x1_seq2 = torch.from_numpy(self.x1_seq2)[:sample_num]
+        self.x2_seq1 = torch.from_numpy(self.x2_seq1)[:sample_num]
+        self.x2_seq2 = torch.from_numpy(self.x2_seq2)[:sample_num]
+        self.y = torch.from_numpy(self.y)[:sample_num]
+
+        self.N = sample_num
 
     def __len__(self):
         return self.N

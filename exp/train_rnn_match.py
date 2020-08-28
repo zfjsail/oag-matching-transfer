@@ -30,6 +30,8 @@ parser.add_argument('--no-cuda', action='store_true', default=False, help='Disab
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--delta-seed', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=300, help='Number of epochs to train.')
+parser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
+parser.add_argument('--valid-num', type=int, default=20, help='Number of valid samples')
 parser.add_argument('--lr', type=float, default=1e-4, help='Initial learning rate.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
                     help='Weight decay (L2 loss on parameters).')
@@ -46,14 +48,14 @@ parser.add_argument('--max-key-sequence-length', type=int, default=8,
 parser.add_argument('--batch', type=int, default=32, help="Batch size")
 parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
 parser.add_argument('--file-dir', type=str, default=settings.VENUE_DATA_DIR, help="Input file directory")
-parser.add_argument('--entity-type', type=str, default="paper", help="entity type to match")
+parser.add_argument('--entity-type', type=str, default="aff", help="entity type to match")
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")
 
 args = parser.parse_args()
 
-writer = SummaryWriter('runs/{}_rnn_{}'.format(args.entity_type, args.delta_seed))
+writer = SummaryWriter('runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, args.delta_seed))
 
 
 def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
@@ -152,12 +154,13 @@ def main(args=args):
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
 
-    dataset = ProcessedRNNInputDataset(args.entity_type, "train")
-    dataset_valid = ProcessedRNNInputDataset(args.entity_type, "valid")
+    dataset = ProcessedRNNInputDataset(args.entity_type, "train", args.train_num)
+    dataset_valid = ProcessedRNNInputDataset(args.entity_type, "valid", args.valid_num)
     dataset_test = ProcessedRNNInputDataset(args.entity_type, "test")
     N = len(dataset)
     N_valid = len(dataset_valid)
     N_test = len(dataset_test)
+    print("n_train", N)
     train_loader = DataLoader(dataset, batch_size=args.batch,
                               sampler=ChunkSampler(N, 0))
     valid_loader = DataLoader(dataset_valid, batch_size=args.batch,
@@ -203,13 +206,13 @@ def main(args=args):
                 loss_val_min = metrics_val[0]
                 best_test_metric = metrics_test
                 best_model = model
-                torch.save(best_model.state_dict(), join(model_dir, "rnn-match-best-now.mdl"))
+                torch.save(best_model.state_dict(), join(model_dir, "rnn-match-best-now-train-ratio-{}.mdl".format(args.train_num)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
 
     print("min_val_loss", loss_val_min, "best test metrics", best_test_metric[2:])
-    with open(join(model_dir, "{}_rnn_results.txt".format(args.entity_type)), "w") as wf:
+    with open(join(model_dir, "{}_rnn_train_ratio_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
         wf.write(
             "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
                 loss_val_min, best_test_metric[1] * 100, best_test_metric[2] * 100, best_test_metric[3] * 100,
