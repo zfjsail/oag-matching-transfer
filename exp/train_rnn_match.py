@@ -31,7 +31,6 @@ parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--delta-seed', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=300, help='Number of epochs to train.')
 parser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
-parser.add_argument('--valid-num', type=int, default=20, help='Number of valid samples')
 parser.add_argument('--lr', type=float, default=1e-4, help='Initial learning rate.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
                     help='Weight decay (L2 loss on parameters).')
@@ -155,7 +154,7 @@ def main(args=args):
     logger.info('cuda is available %s', args.cuda)
 
     dataset = ProcessedRNNInputDataset(args.entity_type, "train", args.train_num)
-    dataset_valid = ProcessedRNNInputDataset(args.entity_type, "valid", args.valid_num)
+    dataset_valid = ProcessedRNNInputDataset(args.entity_type, "valid")
     dataset_test = ProcessedRNNInputDataset(args.entity_type, "test")
     N = len(dataset)
     N_valid = len(dataset_valid)
