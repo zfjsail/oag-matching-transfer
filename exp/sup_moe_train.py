@@ -74,7 +74,8 @@ args, _ = argparser.parse_known_args()
 
 n_sources = len(args.train.split(','))
 
-writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_seed_{}'.format(args.test, args.base_model, args.attn_type, n_sources, args.seed_delta))
+writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_seed_{}'.format(
+    args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta))
 
 
 class HLoss(nn.Module):
@@ -598,11 +599,11 @@ def train(args):
             best_test_results = metrics_test
             weights_sources = [alpha_weights_val, alpha_weights_test]
             torch.save([classifiers, attn_mats],
-                       os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_seed_{}_best_now.mdl".format(
-                           args.test, args.base_model, args.attn_type, n_sources, args.seed_delta)))
+                       os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_best_now.mdl".format(
+                           args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)))
 
-    with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_seed_{}_results.txt".format(
-            args.test, args.base_model, args.attn_type, n_sources, args.seed_delta)), "w") as wf:
+    with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_results.txt".format(
+            args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)), "w") as wf:
         wf.write(
             "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
                 min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
