@@ -36,10 +36,10 @@ argparser.add_argument("--test", type=str, default="aff",
 argparser.add_argument("--eval_only", action="store_true")
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--max_epoch", type=int, default=200)
-argparser.add_argument("--lr", type=float, default=1e-3)
+argparser.add_argument("--lr", type=float, default=1e-2)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
-argparser.add_argument("--base_model", type=str, default="rnn")
+argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
 argparser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
 
@@ -601,6 +601,12 @@ def train(args):
             torch.save([classifiers, attn_mats],
                        os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_best_now.mdl".format(
                            args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)))
+
+    print()
+    print("min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+                min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+                              best_test_results[4] * 100
+            ))
 
     with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_results.txt".format(
             args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)), "w") as wf:

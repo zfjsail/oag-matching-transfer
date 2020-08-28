@@ -47,6 +47,7 @@ parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--seed-delta', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=1e-2, help='Initial learning rate.')
+parser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
 parser.add_argument('--initial-accumulator-value', type=float, default=0.01, help='Initial accumulator value.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
                     help='Weight decay (L2 loss on parameters).')
@@ -63,7 +64,7 @@ parser.add_argument('--valid-ratio', type=float, default=10, help="Validation ra
 
 args = parser.parse_args()
 
-writer = SummaryWriter('runs/{}_cnn_{}'.format(args.entity_type, args.seed_delta))
+writer = SummaryWriter('runs/{}_cnn_train_num_{}_{}'.format(args.entity_type, args.train_num, args.seed_delta))
 
 
 def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
@@ -175,12 +176,13 @@ def main(args=args):
     if args.cuda:
         torch.cuda.manual_seed(args.seed + args.seed_delta)
 
-    dataset = ProcessedCNNInputDataset(args.entity_type, "train")
+    dataset = ProcessedCNNInputDataset(args.entity_type, "train", args.train_num)
     dataset_valid = ProcessedCNNInputDataset(args.entity_type, "valid")
     dataset_test = ProcessedCNNInputDataset(args.entity_type, "test")
     N = len(dataset)
     N_valid = len(dataset_valid)
     N_test = len(dataset_test)
+    print("n_train", N)
     train_loader = DataLoader(dataset, batch_size=args.batch,
                               sampler=ChunkSampler(N, 0))
     valid_loader = DataLoader(dataset_valid, batch_size=args.batch,
@@ -219,7 +221,7 @@ def main(args=args):
             if min_loss_val is None or min_loss_val > metrics_val[0]:
                 min_loss_val = metrics_val[0]
                 best_test_metrics = metrics_test
-                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now.mdl"))
+                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now-train-num-{}.mdl".format(args.train_num)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
@@ -228,7 +230,7 @@ def main(args=args):
         min_loss_val, best_test_metrics[1], best_test_metrics[2], best_test_metrics[3], best_test_metrics[4]
     ))
 
-    with open(join(model_dir, "{}_cnn_results.txt".format(args.entity_type)), "w") as wf:
+    with open(join(model_dir, "{}_cnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
         wf.write(
             "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
                 min_loss_val, best_test_metrics[1] * 100, best_test_metrics[2] * 100, best_test_metrics[3] * 100,

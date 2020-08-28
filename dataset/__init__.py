@@ -92,7 +92,7 @@ def gen_all_domain_tokenizer():
 
 class ProcessedCNNInputDataset(Dataset):
 
-    def __init__(self, entity_type, role):
+    def __init__(self, entity_type, role, sample_num=None):
 
         data_dir = settings.DOM_ADAPT_DIR
         fname = "{}_{}.pkl".format(entity_type, role)
@@ -103,9 +103,14 @@ class ProcessedCNNInputDataset(Dataset):
 
         self.N = len(self.y)
 
-        self.x1 = torch.from_numpy(self.x1)
-        self.x2 = torch.from_numpy(self.x2)
-        self.y = torch.from_numpy(self.y)
+        if sample_num is None:
+            sample_num = self.N
+
+        self.x1 = torch.from_numpy(self.x1)[:sample_num]
+        self.x2 = torch.from_numpy(self.x2)[:sample_num]
+        self.y = torch.from_numpy(self.y)[:sample_num]
+
+        self.N = sample_num
 
     def __len__(self):
         return self.N
