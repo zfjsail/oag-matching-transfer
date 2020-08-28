@@ -41,6 +41,7 @@ argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
+argparser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
@@ -455,17 +456,21 @@ def train(args):
 
     say("Transferring from %s to %s\n" % (args.train, args.test))
 
+    valid_num = int(args.train_num / 4)
+
     if args.base_model == "cnn":
         train_dataset_dst = ProcessedCNNInputDataset(args.test, "train")
         valid_dataset = ProcessedCNNInputDataset(args.test, "valid")
         test_dataset = ProcessedCNNInputDataset(args.test, "test")
 
     elif args.base_model == "rnn":
-        train_dataset_dst = ProcessedRNNInputDataset(args.test, "train")
-        valid_dataset = ProcessedRNNInputDataset(args.test, "valid")
+        train_dataset_dst = ProcessedRNNInputDataset(args.test, "train", args.train_num)
+        valid_dataset = ProcessedRNNInputDataset(args.test, "valid", valid_num)
         test_dataset = ProcessedRNNInputDataset(args.test, "test")
     else:
         raise NotImplementedError
+
+    print("train num", len(train_dataset_dst))
 
     train_loader_dst = data.DataLoader(
         train_dataset_dst,
