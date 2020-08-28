@@ -74,7 +74,7 @@ args, _ = argparser.parse_known_args()
 
 n_sources = len(args.train.split(','))
 
-writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_seed_{}'.format(
+writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_{}_seed_{}'.format(
     args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta))
 
 
