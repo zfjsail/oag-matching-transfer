@@ -466,7 +466,7 @@ def train(args):
 
     elif args.base_model == "rnn":
         train_dataset_dst = ProcessedRNNInputDataset(args.test, "train", args.train_num)
-        valid_dataset = ProcessedRNNInputDataset(args.test, "valid", valid_num)
+        valid_dataset = ProcessedRNNInputDataset(args.test, "valid")
         test_dataset = ProcessedRNNInputDataset(args.test, "test")
     else:
         raise NotImplementedError
