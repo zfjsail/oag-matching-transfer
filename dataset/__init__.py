@@ -154,7 +154,7 @@ class ProcessedRNNInputDataset(Dataset):
                     x1_2.append(self.x1_seq2[i])
                     x2_1.append(self.x2_seq1[i])
                     x2_2.append(self.x2_seq2[i])
-                    y.append(y[i])
+                    y.append(cur_y)
                     n_pos += 1
                     if n_pos == n_sample_half:
                         pos_flag = True
@@ -163,15 +163,15 @@ class ProcessedRNNInputDataset(Dataset):
                     x1_2.append(self.x1_seq2[i])
                     x2_1.append(self.x2_seq1[i])
                     x2_2.append(self.x2_seq2[i])
-                    y.append(y[i])
+                    y.append(cur_y)
                     n_neg += 1
                     if n_neg == n_sample_half:
                         neg_flag = True
-            self.x1_seq1 = x1_1
-            self.x1_seq2 = x1_2
-            self.x2_seq1 = x2_1
-            self.x2_seq2 = x2_2
-            self.y = y
+            self.x1_seq1 = np.array(x1_1)
+            self.x1_seq2 = np.array(x1_2)
+            self.x2_seq1 = np.array(x2_1)
+            self.x2_seq2 = np.array(x2_2)
+            self.y = np.array(y)
 
         self.x1_seq1 = torch.from_numpy(self.x1_seq1)
         self.x1_seq2 = torch.from_numpy(self.x1_seq2)
