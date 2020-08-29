@@ -103,14 +103,42 @@ class ProcessedCNNInputDataset(Dataset):
 
         self.N = len(self.y)
 
-        if sample_num is None:
-            sample_num = self.N
+        if sample_num is not None:
+            n_sample_half = int(sample_num / 2)
+            pos_flag = False
+            neg_flag = False
+            x1 = []
+            x2 = []
+            y = []
+            n_pos = 0
+            n_neg = 0
+            for i in range(self.N):
+                if pos_flag and neg_flag:
+                    break
+                cur_y = self.y[i]
+                if cur_y == 1 and n_pos < n_sample_half:
+                    x1.append(self.x1[i])
+                    x2.append(self.x2[i])
+                    y.append(cur_y)
+                    n_pos += 1
+                    if n_pos == n_sample_half:
+                        pos_flag = True
+                elif cur_y == 0 and n_neg < n_sample_half:
+                    x1.append(self.x1[i])
+                    x2.append(self.x2[i])
+                    y.append(cur_y)
+                    n_neg += 1
+                    if n_neg == n_sample_half:
+                        neg_flag = True
+            self.x1 = np.array(x1)
+            self.x2 = np.array(x2)
+            self.y = np.array(y)
 
-        self.x1 = torch.from_numpy(self.x1)[:sample_num]
-        self.x2 = torch.from_numpy(self.x2)[:sample_num]
-        self.y = torch.from_numpy(self.y)[:sample_num]
+        self.x1 = torch.from_numpy(self.x1)
+        self.x2 = torch.from_numpy(self.x2)
+        self.y = torch.from_numpy(self.y)
 
-        self.N = sample_num
+        self.N = len(self.y)
 
     def __len__(self):
         return self.N
