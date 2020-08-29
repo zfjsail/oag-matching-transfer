@@ -36,12 +36,12 @@ argparser.add_argument("--test", type=str, default="aff",
 argparser.add_argument("--eval_only", action="store_true")
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--max_epoch", type=int, default=200)
-argparser.add_argument("--lr", type=float, default=1e-2)
+argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
-argparser.add_argument("--base_model", type=str, default="cnn")
+argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
-argparser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
+argparser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
@@ -460,7 +460,7 @@ def train(args):
     valid_num = int(args.train_num / 4)
 
     if args.base_model == "cnn":
-        train_dataset_dst = ProcessedCNNInputDataset(args.test, "train")
+        train_dataset_dst = ProcessedCNNInputDataset(args.test, "train", args.train_num)
         valid_dataset = ProcessedCNNInputDataset(args.test, "valid")
         test_dataset = ProcessedCNNInputDataset(args.test, "test")
 

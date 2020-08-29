@@ -47,7 +47,7 @@ parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--seed-delta', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=200, help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=1e-2, help='Initial learning rate.')
-parser.add_argument('--train-num', type=int, default=80, help='Number of training samples')
+parser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
 parser.add_argument('--initial-accumulator-value', type=float, default=0.01, help='Initial accumulator value.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
                     help='Weight decay (L2 loss on parameters).')
