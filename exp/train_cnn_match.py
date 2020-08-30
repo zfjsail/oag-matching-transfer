@@ -61,13 +61,12 @@ parser.add_argument('--entity-type', type=str, default="aff", help="Types of ent
 parser.add_argument('--file-dir', type=str, default=settings.AFF_DATA_DIR, help="Input file directory")
 parser.add_argument('--train-ratio', type=float, default=10, help="Training ratio (0, 100)")
 parser.add_argument('--valid-ratio', type=float, default=10, help="Validation ratio (0, 100)")
+parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
 
 args = parser.parse_args()
 
-writer = SummaryWriter('runs/{}_cnn_train_num_{}_{}'.format(args.entity_type, args.train_num, args.seed_delta))
 
-
-def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
+def evaluate(epoch, loader, model, writer, thr=None, return_best_thr=False, args=args):
     model.eval()
     total = 0.
     loss = 0.
@@ -125,7 +124,7 @@ def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
         return None, metrics
 
 
-def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args=args):
+def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writer, args=args):
     model.train()
 
     loss = 0.
@@ -160,14 +159,16 @@ def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args
 
     if (epoch + 1) % args.check_point == 0:
         logger.info("epoch %d, checkpoint! validation...", epoch)
-        best_thr, metrics_val = evaluate(epoch, valid_loader, model, return_best_thr=True, args=args)
+        best_thr, metrics_val = evaluate(epoch, valid_loader, model, writer, return_best_thr=True, args=args)
         logger.info('eval on test data!...')
-        _, metrics_test = evaluate(epoch, test_loader, model, thr=best_thr, args=args)
+        _, metrics_test = evaluate(epoch, test_loader, model, writer, thr=best_thr, args=args)
 
     return metrics_val, metrics_test
 
 
-def main(args=args):
+def train_one_time(args, wf, repeat_seed):
+    writer = SummaryWriter('runs/{}_cnn_train_num_{}_{}'.format(args.entity_type, args.train_num, repeat_seed))
+
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
 
@@ -176,7 +177,7 @@ def main(args=args):
     if args.cuda:
         torch.cuda.manual_seed(args.seed + args.seed_delta)
 
-    dataset = ProcessedCNNInputDataset(args.entity_type, "train", args.train_num)
+    dataset = ProcessedCNNInputDataset(args.entity_type, "train", args.train_num, repeat_seed)
     dataset_valid = ProcessedCNNInputDataset(args.entity_type, "valid")
     dataset_test = ProcessedCNNInputDataset(args.entity_type, "test")
     N = len(dataset)
@@ -209,14 +210,14 @@ def main(args=args):
     model_dir = join(settings.OUT_DIR, args.entity_type)
     os.makedirs(model_dir, exist_ok=True)
 
-    evaluate(0, test_loader, model, thr=None, args=args)
+    evaluate(0, test_loader, model, writer, thr=None, args=args)
 
     min_loss_val = None
     best_test_metrics = None
 
     for epoch in range(args.epochs):
         print("training epoch", epoch)
-        metrics_val, metrics_test = train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args=args)
+        metrics_val, metrics_test = train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writer, args=args)
         if metrics_val is not None:
             if min_loss_val is None or min_loss_val > metrics_val[0]:
                 min_loss_val = metrics_val[0]
@@ -230,17 +231,26 @@ def main(args=args):
         min_loss_val, best_test_metrics[1], best_test_metrics[2], best_test_metrics[3], best_test_metrics[4]
     ))
 
-    with open(join(model_dir, "{}_cnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
-        wf.write(
-            "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-                min_loss_val, best_test_metrics[1] * 100, best_test_metrics[2] * 100, best_test_metrics[3] * 100,
-                              best_test_metrics[4] * 100
-            ))
-        wf.write(json.dumps(vars(args)) + "\n")
+    # with open(join(model_dir, "{}_cnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
+    wf.write(
+        "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n\n".format(
+            min_loss_val, best_test_metrics[1] * 100, best_test_metrics[2] * 100, best_test_metrics[3] * 100,
+                          best_test_metrics[4] * 100
+        ))
+        # wf.write(json.dumps(vars(args)) + "\n")
 
     writer.close()
 
 
+def main(args):
+    model_dir = join(settings.OUT_DIR, args.entity_type)
+    wf = open(join(model_dir, "{}_cnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w")
+    for t in range(args.n_try):
+        train_one_time(args, wf, t)
+    wf.write(json.dumps(vars(args)) + "\n")
+    wf.close()
+
+
 if __name__ == "__main__":
     main(args)
-    print(json.dumps(vars(args)))
+    # print(json.dumps(vars(args)))
