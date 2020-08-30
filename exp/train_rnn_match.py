@@ -154,7 +154,7 @@ def train_one_time(args, wf, repeat_seed):
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
 
-    dataset = ProcessedRNNInputDataset(args.entity_type, "train", args.train_num)
+    dataset = ProcessedRNNInputDataset(args.entity_type, "train", args.train_num, repeat_seed)
     dataset_valid = ProcessedRNNInputDataset(args.entity_type, "valid")
     dataset_test = ProcessedRNNInputDataset(args.entity_type, "test")
     N = len(dataset)
