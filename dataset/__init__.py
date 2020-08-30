@@ -1,6 +1,7 @@
 import json
 from os.path import join
 import numpy as np
+import sklearn
 import torch
 from torch.utils.data import Dataset
 from keras.preprocessing.text import Tokenizer
@@ -92,7 +93,7 @@ def gen_all_domain_tokenizer():
 
 class ProcessedCNNInputDataset(Dataset):
 
-    def __init__(self, entity_type, role, sample_num=None):
+    def __init__(self, entity_type, role, sample_num=None, seed=0):
 
         data_dir = settings.DOM_ADAPT_DIR
         fname = "{}_{}.pkl".format(entity_type, role)
@@ -102,6 +103,11 @@ class ProcessedCNNInputDataset(Dataset):
         self.y = np.array(data_dict["y"], dtype=int)
 
         self.N = len(self.y)
+
+        self.x1, self.x2, self.y = sklearn.utils.shuffle(
+            self.x1, self.x2, self.y,
+            random_state=seed
+        )
 
         if sample_num is not None:
             n_sample_half = int(sample_num / 2)

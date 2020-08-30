@@ -42,6 +42,7 @@ argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
 argparser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
+argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
@@ -74,9 +75,6 @@ args, _ = argparser.parse_known_args()
 
 n_sources = len(args.train.split(','))
 
-writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_{}_seed_{}'.format(
-    args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta))
-
 
 class HLoss(nn.Module):
     def __init__(self):
@@ -89,7 +87,7 @@ class HLoss(nn.Module):
         return b
 
 
-def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_thrs, args, thr=None):
+def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_thrs, args, writer, thr=None):
     encoders, encoder_dst = encoders
 
     map(lambda m: m.eval(), encoders + classifiers + attn_mats)
@@ -281,7 +279,7 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
     return best_thr, metric, alpha_weights
 
 
-def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, args, optim_model, epoch):
+def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, args, optim_model, epoch, writer):
 
     encoders, encoder_dst = encoders
 
@@ -394,7 +392,10 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
     return iter_cnt
 
 
-def train(args):
+def train_one_time(args, wf, repeat_seed=0):
+    writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_{}_repeat_{}'.format(
+        args.test, args.base_model, args.attn_type, n_sources, args.train_num, repeat_seed))
+
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     say('cuda is available %s\n' % args.cuda)
 
@@ -457,10 +458,8 @@ def train(args):
 
     say("Transferring from %s to %s\n" % (args.train, args.test))
 
-    valid_num = int(args.train_num / 4)
-
     if args.base_model == "cnn":
-        train_dataset_dst = ProcessedCNNInputDataset(args.test, "train", args.train_num)
+        train_dataset_dst = ProcessedCNNInputDataset(args.test, "train", args.train_num, repeat_seed)
         valid_dataset = ProcessedCNNInputDataset(args.test, "valid")
         test_dataset = ProcessedCNNInputDataset(args.test, "test")
 
@@ -571,7 +570,8 @@ def train(args):
             train_loader_dst,
             args,
             optim_model,
-            epoch
+            epoch,
+            writer
         )
 
         thr, metrics_val, alpha_weights_val = evaluate(
@@ -580,7 +580,8 @@ def train(args):
             attn_mats,
             valid_loader,
             True,
-            args
+            args,
+            writer
         )
 
         _, metrics_test, alpha_weights_test = evaluate(
@@ -590,6 +591,7 @@ def train(args):
             test_loader,
             False,
             args,
+            writer,
             thr=thr
         )
 
@@ -600,7 +602,7 @@ def train(args):
             weights_sources = [alpha_weights_val, alpha_weights_test]
             torch.save([classifiers, attn_mats],
                        os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_best_now.mdl".format(
-                           args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)))
+                           args.test, args.base_model, args.attn_type, n_sources, args.train_num, repeat_seed)))
 
     print()
     print("min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
@@ -608,24 +610,34 @@ def train(args):
                               best_test_results[4] * 100
             ))
 
-    with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_results.txt".format(
-            args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)), "w") as wf:
-        wf.write(
-            "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-                min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
-                              best_test_results[4] * 100
-            ))
-        wf.write("val weights: ")
-        for w in weights_sources[0]:
-            wf.write("{:.4f}, ".format(w))
-        wf.write("\n")
-        wf.write("test weights: ")
-        for w in weights_sources[1]:
-            wf.write("{:.4f}, ".format(w))
-        wf.write("\n")
-        wf.write(json.dumps(vars(args)) + "\n")
+    # with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_results.txt".format(
+    #         args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)), "w") as wf:
+    wf.write(
+        "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+                          best_test_results[4] * 100
+        ))
+    wf.write("val weights: ")
+    for w in weights_sources[0]:
+        wf.write("{:.4f}, ".format(w))
+    wf.write("\n")
+    wf.write("test weights: ")
+    for w in weights_sources[1]:
+        wf.write("{:.4f}, ".format(w))
+    wf.write("\n\n")
+        # wf.write(json.dumps(vars(args)) + "\n")
+    writer.close()
+
+
+def train(args):
+    model_dir = os.path.join(settings.OUT_DIR, args.test)
+    wf = open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_results.txt".format(
+        args.test, args.base_model, args.attn_type, n_sources, args.train_num)), "w")
+    for t in range(args.n_try):
+        train_one_time(args, wf, t)
+    wf.write(json.dumps(vars(args)) + "\n")
+    wf.close()
 
 
 if __name__ == "__main__":
     train(args)
-    writer.close()
