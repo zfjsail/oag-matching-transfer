@@ -155,7 +155,7 @@ class ProcessedCNNInputDataset(Dataset):
 
 class ProcessedRNNInputDataset(Dataset):
 
-    def __init__(self, entity_type, role, sample_num=None):
+    def __init__(self, entity_type, role, sample_num=None, seed=0):
 
         data_dir = settings.DOM_ADAPT_DIR
         fname = "{}_rnn_{}.pkl".format(entity_type, role)
@@ -167,6 +167,11 @@ class ProcessedRNNInputDataset(Dataset):
         self.y = np.array(data_dict["y"], dtype=int)
 
         self.N = len(self.y)
+
+        self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y = sklearn.utils.shuffle(
+            self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y,
+            random_state=seed
+        )
 
         if sample_num is not None:
             n_sample_half = int(sample_num/2)

@@ -51,13 +51,12 @@ parser.add_argument('--entity-type', type=str, default="aff", help="entity type 
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")
+parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
 
 args = parser.parse_args()
 
-writer = SummaryWriter('runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, args.delta_seed))
 
-
-def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
+def evaluate(epoch, loader, model, writer, thr=None, return_best_thr=False, args=args):
     model.eval()
     total = 0.
     loss = 0.
@@ -112,7 +111,7 @@ def evaluate(epoch, loader, model, thr=None, return_best_thr=False, args=args):
         return None, [loss / total, auc, prec, rec, f1]
 
 
-def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args=args):
+def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writer, args=args):
     model.train()
 
     loss = 0.
@@ -142,14 +141,16 @@ def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args
     metrics_test = None
     if (epoch + 1) % args.check_point == 0:
         logger.info("epoch %d, checkpoint! validation...", epoch)
-        best_thr, metrics_val = evaluate(epoch, valid_loader, model, return_best_thr=True, args=args)
+        best_thr, metrics_val = evaluate(epoch, valid_loader, model, writer, return_best_thr=True, args=args)
         logger.info('eval on test data!...')
-        _, metrics_test = evaluate(epoch, test_loader, model, thr=best_thr, args=args)
+        _, metrics_test = evaluate(epoch, test_loader, model, writer, thr=best_thr, args=args)
 
     return metrics_val, metrics_test
 
 
-def main(args=args):
+def train_one_time(args, wf, repeat_seed):
+    writer = SummaryWriter('runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, repeat_seed))
+
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
 
@@ -197,7 +198,7 @@ def main(args=args):
 
     for epoch in range(args.epochs):
         print("training epoch", epoch)
-        metrics = train(epoch, train_loader, valid_loader, test_loader, model, optimizer, args=args)
+        metrics = train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writer, args=args)
 
         metrics_val, metrics_test = metrics
         if metrics_val is not None:
@@ -211,14 +212,23 @@ def main(args=args):
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
 
     print("min_val_loss", loss_val_min, "best test metrics", best_test_metric[2:])
-    with open(join(model_dir, "{}_rnn_train_ratio_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
-        wf.write(
-            "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-                loss_val_min, best_test_metric[1] * 100, best_test_metric[2] * 100, best_test_metric[3] * 100,
-                              best_test_metric[4] * 100
-            ))
-        wf.write(json.dumps(vars(args)) + "\n")
+    # with open(join(model_dir, "{}_rnn_train_ratio_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
+    wf.write(
+        "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n\n".format(
+            loss_val_min, best_test_metric[1] * 100, best_test_metric[2] * 100, best_test_metric[3] * 100,
+                          best_test_metric[4] * 100
+        ))
+        # wf.write(json.dumps(vars(args)) + "\n")
     writer.close()
+
+
+def main(args):
+    model_dir = join(settings.OUT_DIR, args.entity_type)
+    wf = open(join(model_dir, "{}_rnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w")
+    for t in range(args.n_try):
+        train_one_time(args, wf, t)
+    wf.write(json.dumps(vars(args)) + "\n")
+    wf.close()
 
 
 if __name__ == '__main__':
