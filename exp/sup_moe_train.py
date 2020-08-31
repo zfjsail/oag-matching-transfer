@@ -41,7 +41,7 @@ argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
-argparser.add_argument('--train-num', type=int, default=30, help='Number of training samples')
+argparser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
@@ -635,6 +635,7 @@ def train(args):
         args.test, args.base_model, args.attn_type, n_sources, args.train_num)), "w")
     for t in range(args.n_try):
         train_one_time(args, wf, t)
+        wf.flush()
     wf.write(json.dumps(vars(args)) + "\n")
     wf.close()
 
