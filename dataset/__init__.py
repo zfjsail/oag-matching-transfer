@@ -173,44 +173,44 @@ class ProcessedRNNInputDataset(Dataset):
             random_state=seed
         )
 
-        # if sample_num is not None:
-        #     n_sample_half = int(sample_num/2)
-        #     pos_flag = False
-        #     neg_flag = False
-        #     x1_1 = []
-        #     x1_2 = []
-        #     x2_1 = []
-        #     x2_2 = []
-        #     y = []
-        #     n_pos = 0
-        #     n_neg = 0
-        #     for i in range(self.N):
-        #         if pos_flag and neg_flag:
-        #             break
-        #         cur_y = self.y[i]
-        #         if cur_y == 1 and n_pos < n_sample_half:
-        #             x1_1.append(self.x1_seq1[i])
-        #             x1_2.append(self.x1_seq2[i])
-        #             x2_1.append(self.x2_seq1[i])
-        #             x2_2.append(self.x2_seq2[i])
-        #             y.append(cur_y)
-        #             n_pos += 1
-        #             if n_pos == n_sample_half:
-        #                 pos_flag = True
-        #         elif cur_y == 0 and n_neg < n_sample_half:
-        #             x1_1.append(self.x1_seq1[i])
-        #             x1_2.append(self.x1_seq2[i])
-        #             x2_1.append(self.x2_seq1[i])
-        #             x2_2.append(self.x2_seq2[i])
-        #             y.append(cur_y)
-        #             n_neg += 1
-        #             if n_neg == n_sample_half:
-        #                 neg_flag = True
-        #     self.x1_seq1 = np.array(x1_1)
-        #     self.x1_seq2 = np.array(x1_2)
-        #     self.x2_seq1 = np.array(x2_1)
-        #     self.x2_seq2 = np.array(x2_2)
-        #     self.y = np.array(y)
+        if sample_num is not None:
+            n_sample_half = int(sample_num/2)
+            pos_flag = False
+            neg_flag = False
+            x1_1 = []
+            x1_2 = []
+            x2_1 = []
+            x2_2 = []
+            y = []
+            n_pos = 0
+            n_neg = 0
+            for i in range(self.N):
+                if pos_flag and neg_flag:
+                    break
+                cur_y = self.y[i]
+                if cur_y == 1 and n_pos < n_sample_half:
+                    x1_1.append(self.x1_seq1[i])
+                    x1_2.append(self.x1_seq2[i])
+                    x2_1.append(self.x2_seq1[i])
+                    x2_2.append(self.x2_seq2[i])
+                    y.append(cur_y)
+                    n_pos += 1
+                    if n_pos == n_sample_half:
+                        pos_flag = True
+                elif cur_y == 0 and n_neg < n_sample_half:
+                    x1_1.append(self.x1_seq1[i])
+                    x1_2.append(self.x1_seq2[i])
+                    x2_1.append(self.x2_seq1[i])
+                    x2_2.append(self.x2_seq2[i])
+                    y.append(cur_y)
+                    n_neg += 1
+                    if n_neg == n_sample_half:
+                        neg_flag = True
+            self.x1_seq1 = np.array(x1_1)
+            self.x1_seq2 = np.array(x1_2)
+            self.x2_seq1 = np.array(x2_1)
+            self.x2_seq2 = np.array(x2_2)
+            self.y = np.array(y)
 
         if sample_num is None:
             sample_num = self.N

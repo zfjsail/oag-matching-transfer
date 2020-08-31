@@ -41,7 +41,7 @@ argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
-argparser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
+argparser.add_argument('--train-num', type=int, default=30, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
