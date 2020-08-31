@@ -247,6 +247,7 @@ def main(args):
     wf = open(join(model_dir, "{}_cnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w")
     for t in range(args.n_try):
         train_one_time(args, wf, t)
+        wf.flush()
     wf.write(json.dumps(vars(args)) + "\n")
     wf.close()
 
