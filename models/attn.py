@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class MulInteractAttention(nn.Module):
@@ -15,7 +16,7 @@ class MulInteractAttention(nn.Module):
     def forward(self, src_hidden, dst_hidden):
         hidden1 = self.fc_1(src_hidden)
         hidden2 = self.fc_2(dst_hidden)
-        out = self.fc_out(hidden1 * hidden2)
+        out = self.fc_out(F.relu(hidden1 * hidden2))
         return out
 
 
