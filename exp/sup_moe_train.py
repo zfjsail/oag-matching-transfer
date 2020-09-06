@@ -42,7 +42,7 @@ argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="onehot")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
-argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
+argparser.add_argument('--n-try', type=int, default=1, help='Repeat Times')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
