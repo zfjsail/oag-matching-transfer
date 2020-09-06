@@ -73,10 +73,13 @@ class AffCNNMatchDataset(Dataset):
 
         self.N = len(self.Y)
 
-        # n_train = int(self.N*0.6)
-        # n_test = int(self.N*0.2)
-        n_train = 800
-        n_test = 200
+        N = self.N
+
+        n_train = int(self.N*0.6)
+        n_valid = int(self.N*0.2)
+        n_test = N - n_train - n_valid
+        # n_train = 800
+        # n_test = 200
 
         train_data = {}
         train_data["x1"] = self.X_long[:n_train]
@@ -85,15 +88,15 @@ class AffCNNMatchDataset(Dataset):
         print("train labels", len(train_data["y"]))
 
         test_data = {}
-        test_data["x1"] = self.X_long[n_train:(n_train+n_test)]
-        test_data["x2"] = self.X_short[n_train:(n_train+n_test)]
-        test_data["y"] = self.Y[n_train:(n_train+n_test)]
+        test_data["x1"] = self.X_long[(n_train+n_valid): (n_train+n_valid+n_test)]
+        test_data["x2"] = self.X_short[(n_train+n_valid): (n_train+n_valid+n_test)]
+        test_data["y"] = self.Y[(n_train+n_valid): (n_train+n_valid+n_test)]
         print("test labels", len(test_data["y"]), test_data["y"])
 
         valid_data = {}
-        valid_data["x1"] = self.X_long[n_train+n_test:(n_train+n_test*2)]
-        valid_data["x2"] = self.X_short[n_train+n_test:(n_train+n_test*2)]
-        valid_data["y"] = self.Y[n_train+n_test:(n_train+n_test*2)]
+        valid_data["x1"] = self.X_long[n_train:(n_train+n_valid)]
+        valid_data["x2"] = self.X_short[n_train:(n_train+n_valid)]
+        valid_data["y"] = self.Y[n_train:(n_train+n_valid)]
         print("valid labels", len(valid_data["y"]), valid_data["y"])
 
         out_dir = join(settings.DATA_DIR, "dom-adpt")
@@ -209,10 +212,11 @@ class AffRNNMatchDataset(Dataset):
 
         self.N = len(self.labels)
 
-        # n_train = int(self.N * 0.6)
-        # n_test = int(self.N * 0.2)
-        n_train = 800
-        n_test = 200
+        N = self.N
+
+        n_train = int(self.N*0.6)
+        n_valid = int(self.N*0.2)
+        n_test = N - n_train - n_valid
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:n_train]
@@ -224,19 +228,19 @@ class AffRNNMatchDataset(Dataset):
         print("train labels", len(train_data["y"]))
 
         test_data = {}
-        test_data["x1_seq1"] = self.mag[n_train:(n_train+n_test)]
-        test_data["x1_seq2"] = self.mag_keywords[n_train:(n_train+n_test)]
-        test_data["x2_seq1"] = self.aminer[n_train:(n_train+n_test)]
-        test_data["x2_seq2"] = self.aminer_keywords[n_train:(n_train+n_test)]
-        test_data["y"] = self.labels[n_train:(n_train+n_test)]
+        test_data["x1_seq1"] = self.mag[(n_train+n_valid):(n_train+n_valid+n_test)]
+        test_data["x1_seq2"] = self.mag_keywords[(n_train+n_valid):(n_train+n_valid+n_test)]
+        test_data["x2_seq1"] = self.aminer[(n_train+n_valid):(n_train+n_valid+n_test)]
+        test_data["x2_seq2"] = self.aminer_keywords[(n_train+n_valid):(n_train+n_valid+n_test)]
+        test_data["y"] = self.labels[(n_train+n_valid):(n_train+n_valid+n_test)]
         print("test labels", len(test_data["y"]))
 
         valid_data = {}
-        valid_data["x1_seq1"] = self.mag[n_train+n_test:(n_train+n_test*2)]
-        valid_data["x1_seq2"] = self.mag_keywords[n_train+n_test:(n_train+n_test*2)]
-        valid_data["x2_seq1"] = self.aminer[n_train+n_test:(n_train+n_test*2)]
-        valid_data["x2_seq2"] = self.aminer_keywords[n_train+n_test:(n_train+n_test*2)]
-        valid_data["y"] = self.labels[n_train+n_test:(n_train+n_test*2)]
+        valid_data["x1_seq1"] = self.mag[n_train:(n_train+n_valid)]
+        valid_data["x1_seq2"] = self.mag_keywords[n_train:(n_train+n_valid)]
+        valid_data["x2_seq1"] = self.aminer[n_train:(n_train+n_valid)]
+        valid_data["x2_seq2"] = self.aminer_keywords[n_train:(n_train+n_valid)]
+        valid_data["y"] = self.labels[n_train:(n_train+n_valid)]
         print("valid labels", len(valid_data["y"]))
 
         out_dir = join(settings.DATA_DIR, "dom-adpt")
@@ -282,5 +286,5 @@ if __name__ == "__main__":
     parser.add_argument('--max-key-sequence-length', type=int, default=8,
                         help="Max key sequence length for key sequences")
     args = parser.parse_args()
-    dataset = AffCNNMatchDataset(args.file_dir, args.matrix_size1, args.matrix_size2, args.seed, shuffle=args.shuffle, args=args, use_emb=False)
+    # dataset = AffCNNMatchDataset(args.file_dir, args.matrix_size1, args.matrix_size2, args.seed, shuffle=args.shuffle, args=args, use_emb=False)
     dataset = AffRNNMatchDataset(args.file_dir, args.max_sequence_length, args.max_key_sequence_length, shuffle=True, seed=args.seed, args=args)

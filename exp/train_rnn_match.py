@@ -30,7 +30,7 @@ parser.add_argument('--no-cuda', action='store_true', default=False, help='Disab
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--delta-seed', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=300, help='Number of epochs to train.')
-parser.add_argument('--train-num', type=int, default=50, help='Number of training samples')
+parser.add_argument('--train-num', default=None, help='Number of training samples')
 parser.add_argument('--lr', type=float, default=1e-4, help='Initial learning rate.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
                     help='Weight decay (L2 loss on parameters).')
@@ -51,7 +51,7 @@ parser.add_argument('--entity-type', type=str, default="aff", help="entity type 
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")
-parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
+parser.add_argument('--n-try', type=int, default=1, help="Repeat Times")
 
 args = parser.parse_args()
 
@@ -211,7 +211,7 @@ def train_one_time(args, wf, repeat_seed):
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
 
-    print("min_val_loss", loss_val_min, "best test metrics", best_test_metric[2:])
+    print("min_val_loss", loss_val_min, "best test metrics", best_test_metric[1:])
     # with open(join(model_dir, "{}_rnn_train_ratio_{}_results.txt".format(args.entity_type, args.train_num)), "w") as wf:
     wf.write(
         "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n\n".format(

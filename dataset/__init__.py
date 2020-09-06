@@ -104,12 +104,12 @@ class ProcessedCNNInputDataset(Dataset):
 
         self.N = len(self.y)
 
-        self.x1, self.x2, self.y = sklearn.utils.shuffle(
-            self.x1, self.x2, self.y,
-            random_state=seed
-        )
-
         if sample_num is not None:
+            self.x1, self.x2, self.y = sklearn.utils.shuffle(
+                self.x1, self.x2, self.y,
+                random_state=seed
+            )
+
             n_sample_half = int(sample_num / 2)
             pos_flag = False
             neg_flag = False
@@ -168,12 +168,12 @@ class ProcessedRNNInputDataset(Dataset):
 
         self.N = len(self.y)
 
-        self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y = sklearn.utils.shuffle(
-            self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y,
-            random_state=seed
-        )
-
         if sample_num is not None:
+            self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y = sklearn.utils.shuffle(
+                self.x1_seq1, self.x1_seq2, self.x2_seq1, self.x2_seq2, self.y,
+                random_state=seed
+            )
+
             n_sample_half = int(sample_num/2)
             pos_flag = False
             neg_flag = False

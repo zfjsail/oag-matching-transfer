@@ -35,7 +35,7 @@ argparser.add_argument("--test", type=str, default="aff",
                        help="target domain for testing")
 argparser.add_argument("--eval_only", action="store_true")
 argparser.add_argument("--batch_size", type=int, default=32)
-argparser.add_argument("--max_epoch", type=int, default=200)
+argparser.add_argument("--max_epoch", type=int, default=300)
 argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
