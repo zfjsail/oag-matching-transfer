@@ -399,7 +399,7 @@ def train_one_time(args, wf, repeat_seed=0):
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     say('cuda is available %s\n' % args.cuda)
 
-    np.random.seed(args.seed)
+    np.random.seed(args.seed + repeat_seed)
     torch.manual_seed(args.seed + repeat_seed)
     if args.cuda:
         torch.cuda.manual_seed(args.seed + repeat_seed)
@@ -557,6 +557,7 @@ def train_one_time(args, wf, repeat_seed=0):
 
     iter_cnt = 0
     min_loss_val = None
+    max_auc_val = None
     best_test_results = None
     weights_sources = None
     model_dir = os.path.join(settings.OUT_DIR, args.test)
@@ -595,9 +596,12 @@ def train_one_time(args, wf, repeat_seed=0):
             thr=thr
         )
 
-        if min_loss_val is None or min_loss_val > metrics_val[0]:
-            print("change val loss from {} to {}".format(min_loss_val, metrics_val[0]))
-            min_loss_val = metrics_val[0]
+        # if min_loss_val is None or min_loss_val > metrics_val[0]:
+        if max_auc_val is None or max_auc_val < metrics_val[1]:
+            # print("change val loss from {} to {}".format(min_loss_val, metrics_val[0]))
+            print("change val auc from {} to {}".format(max_auc_val, metrics_val[1]))
+            # min_loss_val = metrics_val[0]
+            max_auc_val = metrics_val[1]
             best_test_results = metrics_test
             weights_sources = [alpha_weights_val, alpha_weights_test]
             torch.save([classifiers, attn_mats],
@@ -605,16 +609,25 @@ def train_one_time(args, wf, repeat_seed=0):
                            args.test, args.base_model, args.attn_type, n_sources, args.train_num, repeat_seed)))
 
     print()
-    print("min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-                min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+    # print("min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+    #             min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+    #                           best_test_results[4] * 100
+    #         ))
+    print("max valid auc {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+                max_auc_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
                               best_test_results[4] * 100
             ))
 
     # with open(os.path.join(model_dir, "{}_{}_moe_attn_{}_sources_{}_train_num_{}_seed_{}_results.txt".format(
     #         args.test, args.base_model, args.attn_type, n_sources, args.train_num, args.seed_delta)), "w") as wf:
+    # wf.write(
+    #     "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+    #         min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+    #                       best_test_results[4] * 100
+    #     ))
     wf.write(
-        "min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-            min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+        "max valid auc {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            max_auc_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
                           best_test_results[4] * 100
         ))
     wf.write("val weights: ")
