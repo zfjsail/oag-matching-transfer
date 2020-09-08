@@ -88,7 +88,7 @@ def evaluate(epoch, loader, model, writer, thr=None, return_best_thr=False, args
     prec, rec, f1, _ = precision_recall_fscore_support(y_true, y_pred, average="binary")
     auc = roc_auc_score(y_true, y_score)
     logger.info("loss: %.4f AUC: %.4f Prec: %.4f Rec: %.4f F1: %.4f",
-                loss/total, auc, prec, rec, f1)
+                loss / total, auc, prec, rec, f1)
 
     if return_best_thr:  # valid
         precs, recs, thrs = precision_recall_curve(y_true, y_score)
@@ -176,7 +176,7 @@ def train_one_time(args, wf, repeat_seed):
     pretrain_emb = torch.load(join(settings.OUT_DIR, "rnn_init_word_emb.emb"))
 
     model = BiLSTM(vocab_size=settings.MAX_WORD_TOKEN_NUM,
-        pretrain_emb=pretrain_emb,
+                   pretrain_emb=pretrain_emb,
                    embedding_size=args.embedding_size,
                    hidden_size=args.hidden_size,
                    dropout=args.dropout)
@@ -206,7 +206,8 @@ def train_one_time(args, wf, repeat_seed):
                 loss_val_min = metrics_val[0]
                 best_test_metric = metrics_test
                 best_model = model
-                torch.save(best_model.state_dict(), join(model_dir, "rnn-match-best-now-train-ratio-{}.mdl".format(args.train_num)))
+                torch.save(best_model.state_dict(),
+                           join(model_dir, "rnn-match-best-now-train-num-{}.mdl".format(args.train_num)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
@@ -218,7 +219,7 @@ def train_one_time(args, wf, repeat_seed):
             loss_val_min, best_test_metric[1] * 100, best_test_metric[2] * 100, best_test_metric[3] * 100,
                           best_test_metric[4] * 100
         ))
-        # wf.write(json.dumps(vars(args)) + "\n")
+    # wf.write(json.dumps(vars(args)) + "\n")
     writer.close()
 
 

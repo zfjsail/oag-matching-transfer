@@ -435,10 +435,10 @@ def train_one_time(args, wf, repeat_seed=0):
             raise NotImplementedError
         if args.cuda:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num))))
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
         else:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num)),
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num)),
                            map_location=torch.device('cpu')))
 
         encoders_src.append(encoder_class)

@@ -25,12 +25,19 @@ class CNNMatchModel(nn.Module):
         self.n_out = 128 + 36
 
         # self.fc_out = nn.Linear(mat1_hidden+mat2_hidden, 2)
+        # self.fc_out = nn.Sequential(
+        #     nn.Linear(self.mat1_flatten_dim + self.mat2_flatten_dim, mat1_hidden + mat2_hidden),
+        #     nn.ReLU(),
+        #     nn.Linear(mat1_hidden + mat2_hidden, 16),
+        #     nn.ReLU(),
+        #     nn.Linear(16, 2)
+        # )
         self.fc_out = nn.Sequential(
-            nn.Linear(self.mat1_flatten_dim + self.mat2_flatten_dim, mat1_hidden + mat2_hidden),
+            nn.Linear(self.mat1_flatten_dim + self.mat2_flatten_dim, 64),
             nn.ReLU(),
-            nn.Linear(mat1_hidden + mat2_hidden, 16),
+            nn.Linear(64, 16),
             nn.ReLU(),
-            nn.Linear(16, 2)
+            nn.Linear(16, 2),
         )
 
     def forward(self, batch_matrix1, batch_matrix2, ret_out=False):
