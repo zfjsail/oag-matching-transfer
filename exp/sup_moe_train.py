@@ -429,14 +429,15 @@ def train_one_time(args, wf, repeat_seed=0):
             raise NotImplementedError
         if args.cuda:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now.mdl".format(args.base_model))))
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num))))
         else:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now.mdl".format(args.base_model)),
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num)),
                            map_location=torch.device('cpu')))
 
         encoders_src.append(encoder_class)
 
+    dst_model_dir = os.path.join(settings.OUT_DIR, args.test)
     if args.base_model == "cnn":
         encoder_dst_pretrain = CNNMatchModel(input_matrix_size1=args.matrix_size1, input_matrix_size2=args.matrix_size2,
                                              mat1_channel1=args.mat1_channel1, mat1_kernel_size1=args.mat1_kernel_size1,
@@ -451,6 +452,10 @@ def train_one_time(args, wf, repeat_seed=0):
                                       dropout=args.dropout)
     else:
         raise NotImplementedError
+
+    encoder_dst_pretrain.load_state_dict(
+        torch.load(os.path.join(dst_model_dir,
+                                "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num))))
 
     # args = argparser.parse_args()
     say(args)

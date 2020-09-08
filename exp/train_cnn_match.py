@@ -222,7 +222,7 @@ def train_one_time(args, wf, repeat_seed):
             if min_loss_val is None or min_loss_val > metrics_val[0]:
                 min_loss_val = metrics_val[0]
                 best_test_metrics = metrics_test
-                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now-train-num-{}.mdl".format(args.train_num)))
+                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now-train-ratio-{}.mdl".format(args.train_num)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
