@@ -19,7 +19,7 @@ from utils.data_utils import say, softmax
 from dataset import ProcessedCNNInputDataset, ProcessedRNNInputDataset
 from models.cnn import CNNMatchModel
 from models.rnn import BiLSTM
-from models.attn import MulInteractAttention, OneHotAttention
+from models.attn import MulInteractAttention, OneHotAttention, MLP
 
 from utils import settings
 
@@ -40,7 +40,7 @@ argparser.add_argument("--lr", type=float, default=1e-4)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="rnn")
-argparser.add_argument("--attn-type", type=str, default="cor")
+argparser.add_argument("--attn-type", type=str, default="mlp")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=1, help='Repeat Times')
 
@@ -207,6 +207,8 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
             elif args.attn_type == "cor":
                 source_alphas = [attn_mats[j](hidden_from_src_enc[j], hidden_from_dst_enc).squeeze() for j in
                                  source_ids]
+            elif args.attn_type == "mlp":
+                source_alphas = [attn_mats[j](hidden_from_src_enc[j]).squeeze() for j in source_ids]
             else:
                 raise NotImplementedError
 
@@ -350,6 +352,8 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
             source_alphas = [attn_mats[j](one_hot_sources[j]).squeeze() for j in source_ids]
         elif args.attn_type == "cor":
             source_alphas = [attn_mats[j](hidden_from_src_enc[j], hidden_from_dst_enc).squeeze() for j in source_ids]
+        elif args.attn_type == "mlp":
+            source_alphas = [attn_mats[j](hidden_from_src_enc[j]).squeeze() for j in source_ids]
         else:
             raise NotImplementedError
 
@@ -521,6 +525,10 @@ def train_one_time(args, wf, repeat_seed=0):
         elif args.attn_type == "cor":
             attn_mats.append(
                 MulInteractAttention(encoders_src[0].n_out, 16)
+            )
+        elif args.attn_type == "mlp":
+            attn_mats.append(
+                MLP(encoders_src[0].n_out)
             )
         else:
             raise NotImplementedError
