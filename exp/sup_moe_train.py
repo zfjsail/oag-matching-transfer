@@ -36,10 +36,10 @@ argparser.add_argument("--test", type=str, default="aff",
 argparser.add_argument("--eval_only", action="store_true")
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--max_epoch", type=int, default=300)
-argparser.add_argument("--lr", type=float, default=1e-4)
+argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
-argparser.add_argument("--base_model", type=str, default="rnn")
+argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="mlp")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=1, help='Repeat Times')
@@ -541,7 +541,7 @@ def train_one_time(args, wf, repeat_seed=0):
         [e.cuda() for e in encoders_src]
         [c.cuda() for c in classifiers]
         [a.cuda() for a in attn_mats]
-        print("device", next(attn_mats[2].parameters()))
+        # print("device", next(attn_mats[2].parameters()))
         # print("here")
 
     for i, classifier in enumerate(classifiers):
