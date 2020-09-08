@@ -78,7 +78,7 @@ class AffCNNMatchDataset(Dataset):
         # n_train = int(self.N*0.6)
         # n_valid = int(self.N*0.2)
         # n_test = N - n_train - n_valid
-        n_train = 800
+        n_train = 600
         n_valid = 200
         n_test = 200
 
@@ -219,7 +219,7 @@ class AffRNNMatchDataset(Dataset):
         n_valid = int(self.N*0.2)
         n_test = N - n_train - n_valid
 
-        n_train = 800
+        n_train = 600
         n_valid = 200
         n_test = 200
 
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     parser.add_argument('--file-dir', type=str, default=settings.AFF_DATA_DIR, help="Input file directory")
     parser.add_argument('--matrix-size1', type=int, default=7, help='Matrix size 1.')
     parser.add_argument('--matrix-size2', type=int, default=4, help='Matrix size 2.')
-    parser.add_argument('--train-num', type=int, default=800, help='Training size.')
+    parser.add_argument('--train-num', type=int, default=600, help='Training size.')
     parser.add_argument('--test-num', type=int, default=200, help='Testing size.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
     parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
