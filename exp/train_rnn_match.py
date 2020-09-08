@@ -51,7 +51,7 @@ parser.add_argument('--entity-type', type=str, default="aff", help="entity type 
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")
-parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
+parser.add_argument('--n-try', type=int, default=1, help="Repeat Times")
 
 args = parser.parse_args()
 
