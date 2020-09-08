@@ -140,6 +140,8 @@ def evaluate(epoch, encoders, classifiers, attn_mats, data_loader, return_best_t
             elif args.attn_type == "cor":
                 source_alphas = [attn_mats[j](hidden_from_src_enc[j], hidden_from_dst_enc).squeeze() for j in
                                  source_ids]
+            elif args.attn_type == "mlp":
+                source_alphas = [attn_mats[j](hidden_from_src_enc[j]).squeeze() for j in source_ids]
             else:
                 raise NotImplementedError
 
