@@ -461,7 +461,7 @@ def train_one_time(args, wf, repeat_seed=0):
 
     encoder_dst_pretrain.load_state_dict(
         torch.load(os.path.join(dst_model_dir,
-                                "{}-match-best-now-train-ratio-{}.mdl".format(args.base_model, args.train_num))))
+                                "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
 
     # args = argparser.parse_args()
     say(args)
