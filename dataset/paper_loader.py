@@ -74,8 +74,8 @@ class PaperCNNMatchDataset(Dataset):
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
         valid_start = 800
-        test_start = 100 + valid_start
-        end_point = 100 + test_start
+        test_start = 200 + valid_start
+        end_point = 200 + test_start
 
         train_data = {}
         train_data["x1"] = self.X_title[:valid_start]
@@ -201,8 +201,8 @@ class PaperRNNMatchDataset(Dataset):
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
         valid_start = 800
-        test_start = 100 + valid_start
-        end_point = 100 + test_start
+        test_start = 200 + valid_start
+        end_point = 200 + test_start
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:valid_start]

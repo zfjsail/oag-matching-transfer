@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')  # inc
 
 
 def filter_venue_dataset():
-    train_data = json.load(open(join(settings.VENUE_DATA_DIR, "train.txt")))
+    train_data = json.load(open(join(settings.VENUE_DATA_DIR, "train_copy_zfj.txt")))
     ddd = {}
     train_data_new = []
     for pair in train_data:
@@ -279,7 +279,7 @@ if __name__ == "__main__":
     parser.add_argument('--matrix-size1', type=int, default=7, help='Matrix size 1.')
     parser.add_argument('--matrix-size2', type=int, default=4, help='Matrix size 2.')
     parser.add_argument('--train-num', type=int, default=800, help='Training size.')
-    parser.add_argument('--test-num', type=int, default=100, help='Testing size.')
+    parser.add_argument('--test-num', type=int, default=200, help='Testing size.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
     parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
     parser.add_argument('--max-sequence-length', type=int, default=17,
@@ -287,6 +287,6 @@ if __name__ == "__main__":
     parser.add_argument('--max-key-sequence-length', type=int, default=8,
                         help="Max key sequence length for key sequences")
     args = parser.parse_args()
-    # filter_venue_dataset()
+    filter_venue_dataset()
     dataset = VenueCNNMatchDataset(args.file_dir, args.matrix_size1, args.matrix_size2, args.seed, shuffle=False, args=args, use_emb=False)
     dataset = VenueRNNMatchDataset(args.file_dir, args.max_sequence_length, args.max_key_sequence_length, shuffle=True, seed=args.seed, args=args)

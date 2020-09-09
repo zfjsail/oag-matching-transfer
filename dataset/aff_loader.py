@@ -79,8 +79,8 @@ class AffCNNMatchDataset(Dataset):
         # n_valid = int(self.N*0.2)
         # n_test = N - n_train - n_valid
         n_train = 800
-        n_valid = 100
-        n_test = 100
+        n_valid = 200
+        n_test = 200
 
         train_data = {}
         train_data["x1"] = self.X_long[:n_train]
@@ -220,8 +220,8 @@ class AffRNNMatchDataset(Dataset):
         n_test = N - n_train - n_valid
 
         n_train = 800
-        n_valid = 100
-        n_test = 100
+        n_valid = 200
+        n_test = 200
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:n_train]

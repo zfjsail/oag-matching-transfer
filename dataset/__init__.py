@@ -76,7 +76,7 @@ def gen_all_domain_tokenizer():
 
     print("building venue corpus...")
 
-    train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train.txt'), 'r'))
+    train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_copy_zfj.txt'), 'r'))
     for item in train_data:
         corpus.append(item[1].lower())
         corpus.append(item[2].lower())
