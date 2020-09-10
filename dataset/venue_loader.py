@@ -59,6 +59,13 @@ class VenueCNNMatchDataset(Dataset):
         self.tokenizer = data_utils.load_large_obj(settings.OUT_DIR, "tokenizer_all_domain.pkl")
 
         self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))[-600:]
+
+        neg_pairs = [p for p in self.train_data if p[0] == 0]
+        pos_pairs = [p for p in self.train_data if p[0] == 1]
+        n_pos = len(pos_pairs)
+        neg_pairs = neg_pairs[-n_pos:]
+        self.train_data = pos_pairs + neg_pairs
+
         self.train_data = sklearn.utils.shuffle(self.train_data, random_state=37)
 
         self.mag = [nltk.word_tokenize(p[1]) for p in self.train_data]
@@ -96,6 +103,7 @@ class VenueCNNMatchDataset(Dataset):
 
         n_train = args.train_num
         n_test = args.test_num
+        n_train = self.N - 2*n_test
 
         train_data = {}
         train_data["x1"] = self.X_long[:n_train]
@@ -190,6 +198,13 @@ class VenueRNNMatchDataset(Dataset):
         self.max_seq1_len = max_seq1_len
         self.max_seq2_len = max_seq2_len
         self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))[-600:]
+
+        neg_pairs = [p for p in self.train_data if p[0] == 0]
+        pos_pairs = [p for p in self.train_data if p[0] == 1]
+        n_pos = len(pos_pairs)
+        neg_pairs = neg_pairs[-n_pos:]
+        self.train_data = pos_pairs + neg_pairs
+
         self.train_data = sklearn.utils.shuffle(self.train_data, random_state=37)
 
         t = data_utils.load_large_obj(settings.OUT_DIR, "tokenizer_all_domain.pkl")
@@ -215,6 +230,7 @@ class VenueRNNMatchDataset(Dataset):
 
         n_train = args.train_num
         n_test = args.test_num
+        n_train = self.N - 2*n_test
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:n_train]
