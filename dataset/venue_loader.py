@@ -58,7 +58,7 @@ class VenueCNNMatchDataset(Dataset):
             self.pretrain_emb = torch.load(os.path.join(settings.OUT_DIR, "rnn_init_word_emb.emb"))
         self.tokenizer = data_utils.load_large_obj(settings.OUT_DIR, "tokenizer_all_domain.pkl")
 
-        self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))
+        self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))[-600:]
         self.train_data = sklearn.utils.shuffle(self.train_data, random_state=37)
 
         self.mag = [nltk.word_tokenize(p[1]) for p in self.train_data]
@@ -189,7 +189,7 @@ class VenueRNNMatchDataset(Dataset):
 
         self.max_seq1_len = max_seq1_len
         self.max_seq2_len = max_seq2_len
-        self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))
+        self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))[-600:]
         self.train_data = sklearn.utils.shuffle(self.train_data, random_state=37)
 
         t = data_utils.load_large_obj(settings.OUT_DIR, "tokenizer_all_domain.pkl")
@@ -201,6 +201,9 @@ class VenueRNNMatchDataset(Dataset):
         self.mag = t.texts_to_sequences([p[1] for p in self.train_data])
         self.aminer = t.texts_to_sequences([p[2] for p in self.train_data])
         self.labels = [p[0] for p in self.train_data]
+        mag_sum_before = sum([len(x[1].split()) for x in self.train_data])
+        mag_sum_after = sum([len(x) for x in self.mag])
+        print(mag_sum_before, mag_sum_after, mag_sum_before-mag_sum_after)
 
         self.calc_keyword_seqs()
         self.mag = pad_sequences(self.mag, maxlen=self.max_seq1_len)
@@ -278,8 +281,8 @@ if __name__ == "__main__":
     parser.add_argument('--file-dir', type=str, default=settings.VENUE_DATA_DIR, help="Input file directory")
     parser.add_argument('--matrix-size1', type=int, default=7, help='Matrix size 1.')
     parser.add_argument('--matrix-size2', type=int, default=4, help='Matrix size 2.')
-    parser.add_argument('--train-num', type=int, default=800, help='Training size.')
-    parser.add_argument('--test-num', type=int, default=200, help='Testing size.')
+    parser.add_argument('--train-num', type=int, default=400, help='Training size.')
+    parser.add_argument('--test-num', type=int, default=100, help='Testing size.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
     parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
     parser.add_argument('--max-sequence-length', type=int, default=17,
@@ -287,6 +290,6 @@ if __name__ == "__main__":
     parser.add_argument('--max-key-sequence-length', type=int, default=8,
                         help="Max key sequence length for key sequences")
     args = parser.parse_args()
-    filter_venue_dataset()
+    # filter_venue_dataset()
     dataset = VenueCNNMatchDataset(args.file_dir, args.matrix_size1, args.matrix_size2, args.seed, shuffle=False, args=args, use_emb=False)
     dataset = VenueRNNMatchDataset(args.file_dir, args.max_sequence_length, args.max_key_sequence_length, shuffle=True, seed=args.seed, args=args)

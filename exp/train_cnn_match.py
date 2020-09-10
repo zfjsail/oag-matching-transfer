@@ -46,7 +46,7 @@ parser.add_argument('--build-index-window', type=int, default=5, help='Matrix2 h
 parser.add_argument('--seed', type=int, default=42, help='Random seed.')
 parser.add_argument('--seed-delta', type=int, default=0, help='Random seed.')
 parser.add_argument('--epochs', type=int, default=300, help='Number of epochs to train.')
-parser.add_argument('--lr', type=float, default=3e-2, help='Initial learning rate.')
+parser.add_argument('--lr', type=float, default=1e-2, help='Initial learning rate.')
 parser.add_argument('--train-num', default=None, help='Number of training samples')
 parser.add_argument('--initial-accumulator-value', type=float, default=0.01, help='Initial accumulator value.')
 parser.add_argument('--weight-decay', type=float, default=1e-3,
@@ -61,7 +61,7 @@ parser.add_argument('--entity-type', type=str, default="venue", help="Types of e
 parser.add_argument('--file-dir', type=str, default=settings.AFF_DATA_DIR, help="Input file directory")
 parser.add_argument('--train-ratio', type=float, default=10, help="Training ratio (0, 100)")
 parser.add_argument('--valid-ratio', type=float, default=10, help="Validation ratio (0, 100)")
-parser.add_argument('--n-try', type=int, default=1, help="Repeat Times")
+parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
 
 args = parser.parse_args()
 
@@ -209,6 +209,8 @@ def train_one_time(args, wf, repeat_seed):
 
     model_dir = join(settings.OUT_DIR, args.entity_type)
     os.makedirs(model_dir, exist_ok=True)
+    n_paras = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("number of paras:", n_paras)
 
     evaluate(0, test_loader, model, writer, thr=None, args=args)
 
