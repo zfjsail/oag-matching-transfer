@@ -60,8 +60,10 @@ class VenueCNNMatchDataset(Dataset):
 
         self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))
 
+        n_pos_set = int((args.train_num + 2 * args.test_num)/2)
+
         neg_pairs = [p for p in self.train_data if p[0] == 0]
-        pos_pairs = [p for p in self.train_data if p[0] == 1]
+        pos_pairs = [p for p in self.train_data if p[0] == 1][-n_pos_set:]
         n_pos = len(pos_pairs)
         neg_pairs = neg_pairs[-n_pos:]
         self.train_data = pos_pairs + neg_pairs
@@ -103,7 +105,7 @@ class VenueCNNMatchDataset(Dataset):
 
         n_train = args.train_num
         n_test = args.test_num
-        n_train = self.N - 2*n_test
+        # n_train = self.N - 2*n_test
 
         train_data = {}
         train_data["x1"] = self.X_long[:n_train]
@@ -199,8 +201,10 @@ class VenueRNNMatchDataset(Dataset):
         self.max_seq2_len = max_seq2_len
         self.train_data = json.load(open(join(settings.VENUE_DATA_DIR, 'train_filter.txt'), 'r'))
 
+        n_pos_set = int((args.train_num + 2 * args.test_num)/2)
+
         neg_pairs = [p for p in self.train_data if p[0] == 0]
-        pos_pairs = [p for p in self.train_data if p[0] == 1]
+        pos_pairs = [p for p in self.train_data if p[0] == 1][-n_pos_set:]
         n_pos = len(pos_pairs)
         print("n_pos", n_pos)
         neg_pairs = neg_pairs[-n_pos:]
@@ -231,7 +235,7 @@ class VenueRNNMatchDataset(Dataset):
 
         n_train = args.train_num
         n_test = args.test_num
-        n_train = self.N - 2*n_test
+        # n_train = self.N - 2*n_test
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:n_train]
@@ -298,7 +302,7 @@ if __name__ == "__main__":
     parser.add_argument('--file-dir', type=str, default=settings.VENUE_DATA_DIR, help="Input file directory")
     parser.add_argument('--matrix-size1', type=int, default=7, help='Matrix size 1.')
     parser.add_argument('--matrix-size2', type=int, default=4, help='Matrix size 2.')
-    parser.add_argument('--train-num', type=int, default=400, help='Training size.')
+    parser.add_argument('--train-num', type=int, default=800, help='Training size.')
     parser.add_argument('--test-num', type=int, default=200, help='Testing size.')
     parser.add_argument('--seed', type=int, default=42, help='Random seed.')
     parser.add_argument('--shuffle', action='store_true', default=True, help="Shuffle dataset")
