@@ -1,4 +1,5 @@
 import sys, os
+import shutil
 import argparse
 from termcolor import colored
 import numpy as np
@@ -40,7 +41,7 @@ argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="cnn")
-argparser.add_argument("--attn-type", type=str, default="mlp")
+argparser.add_argument("--attn-type", type=str, default="onehot")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=1, help='Repeat Times')
 
@@ -74,6 +75,9 @@ argparser.add_argument('--shuffle', action='store_true', default=True, help="Shu
 args, _ = argparser.parse_known_args()
 
 n_sources = len(args.train.split(','))
+
+sources_all = ["aff", "author", "paper", "venue"]
+source_to_idx = {sources_all[x]: x for x in range(len(sources_all))}
 
 
 class HLoss(nn.Module):
@@ -399,8 +403,11 @@ def train_epoch(iter_cnt, encoders, classifiers, attn_mats, train_loader_dst, ar
 
 
 def train_one_time(args, wf, repeat_seed=0):
-    writer = SummaryWriter('runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_{}_repeat_{}'.format(
-        args.test, args.base_model, args.attn_type, n_sources, args.train_num, repeat_seed))
+    tb_dir = 'runs/{}_sup_base_{}_attn_{}_moe_sources_{}_train_num_{}_repeat_{}'.format(
+        args.test, args.base_model, args.attn_type, n_sources, args.train_num, repeat_seed)
+    if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
+        shutil.rmtree(tb_dir)
+    writer = SummaryWriter(tb_dir)
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     say('cuda is available %s\n' % args.cuda)
@@ -412,12 +419,15 @@ def train_one_time(args, wf, repeat_seed=0):
 
     source_train_sets = args.train.split(',')
     print("sources", source_train_sets)
+    sources_idx = [source_to_idx[s] for s in source_train_sets]
 
     pretrain_emb = torch.load(os.path.join(settings.OUT_DIR, "rnn_init_word_emb.emb"))
 
     encoders_src = []
-    for src_i in range(len(source_train_sets)):
-        cur_model_dir = os.path.join(settings.OUT_DIR, source_train_sets[src_i])
+    # for src_i in range(len(source_train_sets)):
+    for src_i in sources_idx:
+        # cur_model_dir = os.path.join(settings.OUT_DIR, source_train_sets[src_i])
+        cur_model_dir = os.path.join(settings.OUT_DIR, sources_all[src_i])
 
         if args.base_model == "cnn":
             encoder_class = CNNMatchModel(input_matrix_size1=args.matrix_size1, input_matrix_size2=args.matrix_size2,
@@ -435,10 +445,12 @@ def train_one_time(args, wf, repeat_seed=0):
             raise NotImplementedError
         if args.cuda:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}-try-{}.mdl".format(
+                    args.base_model, args.train_num, repeat_seed))))
         else:
             encoder_class.load_state_dict(
-                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num)),
+                torch.load(os.path.join(cur_model_dir, "{}-match-best-now-train-num-{}-try-{}.mdl".format(
+                    args.base_model, args.train_num, repeat_seed)),
                            map_location=torch.device('cpu')))
 
         encoders_src.append(encoder_class)
@@ -461,7 +473,7 @@ def train_one_time(args, wf, repeat_seed=0):
 
     encoder_dst_pretrain.load_state_dict(
         torch.load(os.path.join(dst_model_dir,
-                                "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
+                                "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed))))
 
     # args = argparser.parse_args()
     say(args)
@@ -508,15 +520,22 @@ def train_one_time(args, wf, repeat_seed=0):
 
     classifiers = []
     attn_mats = []
-    for source in source_train_sets:
-        classifier = nn.Sequential(
-            nn.Linear(encoders_src[0].n_out, 64),
-            nn.ReLU(),
-            nn.Linear(64, 16),
-            nn.ReLU(),
-            nn.Linear(16, 2),
-        )
+
+    for src_i in sources_idx:
+        classifier = torch.load(os.path.join(dst_model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
+                args.test, args.base_model, src_i, args.train_num, repeat_seed
+            )))
         classifiers.append(classifier)
+
+    for source in source_train_sets:
+        # classifier = nn.Sequential(
+        #     nn.Linear(encoders_src[0].n_out, 64),
+        #     nn.ReLU(),
+        #     nn.Linear(64, 16),
+        #     nn.ReLU(),
+        #     nn.Linear(16, 2),
+        # )
+        # classifiers.append(classifier)
 
         if args.attn_type == "onehot":
             # cur_att_weight = nn.Linear(len(encoders_src), 1, bias=False)
@@ -550,8 +569,15 @@ def train_one_time(args, wf, repeat_seed=0):
     requires_grad = lambda x: x.requires_grad
     task_params = []
     for src_i in range(len(classifiers)):
-        task_params += list(classifiers[src_i].parameters())
+        # task_params += list(classifiers[src_i].parameters())
         task_params += list(attn_mats[src_i].parameters())
+
+        for para in classifiers[src_i].parameters():
+            para.require_grad = False
+        for para in encoders_src[src_i].parameters():
+            para.require_grad = False
+        for para in attn_mats[src_i].parameters():
+            para.require_grad = True
 
     if args.base_model == "cnn":
         optim_model = optim.Adagrad(
