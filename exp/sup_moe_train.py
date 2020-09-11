@@ -521,21 +521,21 @@ def train_one_time(args, wf, repeat_seed=0):
     classifiers = []
     attn_mats = []
 
-    for src_i in sources_idx:
-        classifier = torch.load(os.path.join(dst_model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
-                args.test, args.base_model, src_i, args.train_num, repeat_seed
-            )))
-        classifiers.append(classifier)
+    # for src_i in sources_idx:
+    #     classifier = torch.load(os.path.join(dst_model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
+    #             args.test, args.base_model, src_i, args.train_num, repeat_seed
+    #         )))
+    #     classifiers.append(classifier)
 
     for source in source_train_sets:
-        # classifier = nn.Sequential(
-        #     nn.Linear(encoders_src[0].n_out, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, 16),
-        #     nn.ReLU(),
-        #     nn.Linear(16, 2),
-        # )
-        # classifiers.append(classifier)
+        classifier = nn.Sequential(
+            nn.Linear(encoders_src[0].n_out, 64),
+            nn.ReLU(),
+            nn.Linear(64, 16),
+            nn.ReLU(),
+            nn.Linear(16, 2),
+        )
+        classifiers.append(classifier)
 
         if args.attn_type == "onehot":
             # cur_att_weight = nn.Linear(len(encoders_src), 1, bias=False)
@@ -569,11 +569,11 @@ def train_one_time(args, wf, repeat_seed=0):
     requires_grad = lambda x: x.requires_grad
     task_params = []
     for src_i in range(len(classifiers)):
-        # task_params += list(classifiers[src_i].parameters())
+        task_params += list(classifiers[src_i].parameters())
         task_params += list(attn_mats[src_i].parameters())
 
         for para in classifiers[src_i].parameters():
-            para.require_grad = False
+            para.require_grad = True
         for para in encoders_src[src_i].parameters():
             para.require_grad = False
         for para in attn_mats[src_i].parameters():
