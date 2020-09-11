@@ -1,4 +1,5 @@
 import os
+import shutil
 import argparse
 import numpy as np
 import json
@@ -40,7 +41,7 @@ argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="mlp")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
-argparser.add_argument('--n-try', type=int, default=1, help='Repeat Times')
+argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
@@ -250,17 +251,20 @@ def train_epoch(iter_cnt, encoders, classifier, train_loader_dst, args, optim_mo
     return iter_cnt
 
 
-def train_single_domain_transfer(args, wf, src):
-    writer = SummaryWriter('runs/{}_sup_base_{}_source_{}_train_num_{}'.format(
-        args.test, args.base_model, src, args.train_num))
+def train_single_domain_transfer(args, wf, src, repeat_seed):
+    tb_dir = 'runs/{}_sup_base_{}_source_{}_train_num_{}_{}'.format(
+        args.test, args.base_model, src, args.train_num, repeat_seed)
+    if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
+        shutil.rmtree(tb_dir)
+    writer = SummaryWriter(tb_dir)
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     say('cuda is available %s\n' % args.cuda)
 
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    np.random.seed(args.seed + repeat_seed)
+    torch.manual_seed(args.seed + repeat_seed)
     if args.cuda:
-        torch.cuda.manual_seed(args.seed)
+        torch.cuda.manual_seed(args.seed + repeat_seed)
 
     pretrain_emb = torch.load(os.path.join(settings.OUT_DIR, "rnn_init_word_emb.emb"))
 
@@ -283,11 +287,11 @@ def train_single_domain_transfer(args, wf, src):
     if args.cuda:
         encoder_src.load_state_dict(
             torch.load(os.path.join(src_model_dir,
-                                    "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
+                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed))))
     else:
         encoder_src.load_state_dict(
             torch.load(os.path.join(src_model_dir,
-                                    "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num)),
+                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed)),
                        map_location=torch.device('cpu')))
 
     dst_model_dir = os.path.join(settings.OUT_DIR, args.test)
@@ -308,7 +312,7 @@ def train_single_domain_transfer(args, wf, src):
 
     encoder_dst_pretrain.load_state_dict(
         torch.load(os.path.join(dst_model_dir,
-                                "{}-match-best-now-train-num-{}.mdl".format(args.base_model, args.train_num))))
+                                "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed))))
 
     # args = argparser.parse_args()
     say(args)
@@ -431,8 +435,8 @@ def train_single_domain_transfer(args, wf, src):
             print("change val loss from {} to {}".format(min_loss_val, metrics_val[0]))
             min_loss_val = metrics_val[0]
             best_test_results = metrics_test
-            torch.save(classifier, os.path.join(model_dir, "{}_{}_classifier_from_src_{}_train_num_{}.mdl".format(
-                args.test, args.base_model, cur_src_idx, args.train_num
+            torch.save(classifier, os.path.join(model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
+                args.test, args.base_model, cur_src_idx, args.train_num, repeat_seed
             )))
 
 
@@ -443,7 +447,7 @@ def train_single_domain_transfer(args, wf, src):
             ))
 
     wf.write(
-        "from src {}, min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n\n".format(
+        "from src {}, min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
             src, min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
                           best_test_results[4] * 100
         ))
@@ -456,11 +460,10 @@ def train(args):
         args.test, args.base_model, args.train_num)), "w")
     test_idx = source_to_idx[args.test]
     for src in sources_all:
-        cur_src_idx = source_to_idx[src]
-        # if cur_src_idx == test_idx:
-        #     continue
-        train_single_domain_transfer(args, wf, src)
-        wf.flush()
+        for t in range(args.n_try):
+            train_single_domain_transfer(args, wf, src, t)
+            wf.flush()
+        wf.write("\n")
     wf.write(json.dumps(vars(args)) + "\n")
     wf.close()
 
