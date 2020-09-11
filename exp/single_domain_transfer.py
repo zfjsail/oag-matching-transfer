@@ -35,7 +35,7 @@ argparser.add_argument("--test", type=str, default="aff",
 argparser.add_argument("--eval_only", action="store_true")
 argparser.add_argument("--batch_size", type=int, default=32)
 argparser.add_argument("--max_epoch", type=int, default=300)
-argparser.add_argument("--lr", type=float, default=1e-1)
+argparser.add_argument("--lr", type=float, default=1e-3)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
 argparser.add_argument("--base_model", type=str, default="rnn")
@@ -476,8 +476,9 @@ def train(args):
         test_rec_mean = np.mean(test_results_list[:, 2])
         test_f1_mean = 2*test_prec_mean*test_rec_mean/(test_prec_mean+test_rec_mean)
         wf.write("from src {}, avg min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-            src, mean_val_loss, test_auc_mean, test_prec_mean, test_rec_mean, test_f1_mean
+            src, mean_val_loss, test_auc_mean*100, test_prec_mean*100, test_rec_mean*100, test_f1_mean*100
         ))
+        wf.flush()
         wf.write("\n")
     wf.write(json.dumps(vars(args)) + "\n")
     wf.close()
