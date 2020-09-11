@@ -1,4 +1,6 @@
 from os.path import join
+import os
+import shutil
 import sys
 import time
 import argparse
@@ -149,7 +151,10 @@ def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writ
 
 
 def train_one_time(args, wf, repeat_seed):
-    writer = SummaryWriter('runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, repeat_seed))
+    tb_dir = 'runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, repeat_seed)
+    if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
+        shutil.rmtree(tb_dir)
+    writer = SummaryWriter(tb_dir)
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
@@ -207,7 +212,7 @@ def train_one_time(args, wf, repeat_seed):
                 best_test_metric = metrics_test
                 best_model = model
                 torch.save(best_model.state_dict(),
-                           join(model_dir, "rnn-match-best-now-train-num-{}.mdl".format(args.train_num)))
+                           join(model_dir, "rnn-match-best-now-train-num-{}-try-{}.mdl".format(args.train_num, repeat_seed)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))

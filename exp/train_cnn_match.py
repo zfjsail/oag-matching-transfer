@@ -5,6 +5,7 @@ from __future__ import print_function
 import argparse
 from os.path import join
 import os
+import shutil
 import numpy as np
 import time
 import json
@@ -167,7 +168,10 @@ def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writ
 
 
 def train_one_time(args, wf, repeat_seed):
-    writer = SummaryWriter('runs/{}_cnn_train_num_{}_{}'.format(args.entity_type, args.train_num, repeat_seed))
+    tb_dir = 'runs/{}_cnn_train_num_{}_{}'.format(args.entity_type, args.train_num, repeat_seed)
+    if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
+        shutil.rmtree(tb_dir)
+    writer = SummaryWriter(tb_dir)
 
     args.cuda = not args.no_cuda and torch.cuda.is_available()
     logger.info('cuda is available %s', args.cuda)
@@ -224,7 +228,7 @@ def train_one_time(args, wf, repeat_seed):
             if min_loss_val is None or min_loss_val > metrics_val[0]:
                 min_loss_val = metrics_val[0]
                 best_test_metrics = metrics_test
-                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now-train-num-{}.mdl".format(args.train_num)))
+                torch.save(model.state_dict(), join(model_dir, "cnn-match-best-now-train-num-{}-try-{}.mdl".format(args.train_num, repeat_seed)))
 
     logger.info("optimization Finished!")
     logger.info("total time elapsed: {:.4f}s".format(time.time() - t_total))
