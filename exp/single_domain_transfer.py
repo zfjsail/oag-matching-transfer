@@ -38,7 +38,7 @@ argparser.add_argument("--max_epoch", type=int, default=300)
 argparser.add_argument("--lr", type=float, default=1e-1)
 argparser.add_argument("--lambda_entropy", type=float, default=0.0)
 argparser.add_argument("--lambda_moe", type=float, default=1)
-argparser.add_argument("--base_model", type=str, default="cnn")
+argparser.add_argument("--base_model", type=str, default="rnn")
 argparser.add_argument("--attn-type", type=str, default="mlp")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=5, help='Repeat Times')
@@ -453,6 +453,8 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
         ))
     writer.close()
 
+    return min_loss_val, best_test_results[1:]
+
 
 def train(args):
     model_dir = os.path.join(settings.OUT_DIR, args.test)
@@ -460,9 +462,22 @@ def train(args):
         args.test, args.base_model, args.train_num)), "w")
     test_idx = source_to_idx[args.test]
     for src in sources_all:
+        min_loss_val_list = []
+        test_results_list = []
         for t in range(args.n_try):
-            train_single_domain_transfer(args, wf, src, t)
+            cur_min_loss_val, cur_test_results = train_single_domain_transfer(args, wf, src, t)
+            min_loss_val_list.append(cur_min_loss_val)
+            test_results_list.append(cur_test_results)
             wf.flush()
+        mean_val_loss = np.mean(min_loss_val_list)
+        test_results_list = np.array(test_results_list)
+        test_auc_mean = np.mean(test_results_list[:, 0])
+        test_prec_mean = np.mean(test_results_list[:, 1])
+        test_rec_mean = np.mean(test_results_list[:, 2])
+        test_f1_mean = 2*test_prec_mean*test_rec_mean/(test_prec_mean+test_rec_mean)
+        wf.write("from src {}, avg min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            src, mean_val_loss, test_auc_mean, test_prec_mean, test_rec_mean, test_f1_mean
+        ))
         wf.write("\n")
     wf.write(json.dumps(vars(args)) + "\n")
     wf.close()
