@@ -55,6 +55,8 @@ def gen_mean_tranfer_results(dst, n_sources, attn, base_model):
     val_weight_list = np.array(val_weight_list)
     test_weight_list = np.array(test_weight_list)
 
+    assert len(val_weight_list) == 10
+
     val_loss_mean = np.mean(val_losses)
     prec_mean = np.mean(prec_list)
     rec_mean = np.mean(rec_list)
