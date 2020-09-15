@@ -73,7 +73,7 @@ def gen_mean_tranfer_results(dst, n_sources, attn, base_model):
     )), "w") as wf:
         wf.write("val loss mean: {:.4f}\n".format(val_loss_mean))
         wf.write("test results: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-            auc_mean*100, prec_mean*100, rec_mean*100, f1_mean*100
+            auc_mean, prec_mean, rec_mean, f1_mean
         ))
         wf.write("val weights: ")
         for s in range(n_sources):
