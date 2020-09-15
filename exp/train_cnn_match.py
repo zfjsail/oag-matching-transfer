@@ -62,7 +62,7 @@ parser.add_argument('--entity-type', type=str, default="venue", help="Types of e
 parser.add_argument('--file-dir', type=str, default=settings.AFF_DATA_DIR, help="Input file directory")
 parser.add_argument('--train-ratio', type=float, default=10, help="Training ratio (0, 100)")
 parser.add_argument('--valid-ratio', type=float, default=10, help="Validation ratio (0, 100)")
-parser.add_argument('--n-try', type=int, default=5, help="Repeat Times")
+parser.add_argument('--n-try', type=int, default=10, help="Repeat Times")
 
 args = parser.parse_args()
 
