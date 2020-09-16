@@ -42,6 +42,7 @@ argparser.add_argument("--base_model", type=str, default="cnn")
 argparser.add_argument("--attn-type", type=str, default="mlp")
 argparser.add_argument('--train-num', default=None, help='Number of training samples')
 argparser.add_argument('--n-try', type=int, default=10, help='Repeat Times')
+argparser.add_argument('--n-tune', type=int, default=1, help='Number of fine-tune layers')
 
 argparser.add_argument('--embedding-size', type=int, default=128,
                        help="Embeding size for LSTM layer")
@@ -99,7 +100,7 @@ def evaluate(epoch, encoders, classifier, data_loader, return_best_thrs, args, w
             batch2 = Variable(batch2)
             bs = len(batch1)
 
-            _, cur_hidden = encoder_src(batch1, batch2)
+            _, cur_hidden = encoder_src(batch1, batch2, rsv_layer=args.n_tune)
             cur_output = classifier(cur_hidden)
 
             output = F.softmax(cur_output, dim=1)
@@ -127,7 +128,7 @@ def evaluate(epoch, encoders, classifier, data_loader, return_best_thrs, args, w
             # batch2 = Variable(batch2)
             bs = len(batch1)
 
-            _, cur_hidden = encoder_src(batch1, batch2, batch3, batch4)
+            _, cur_hidden = encoder_src(batch1, batch2, batch3, batch4, rsv_layer=args.n_tune)
             cur_output = classifier(cur_hidden)
 
             output = F.softmax(cur_output, dim=1)
@@ -210,16 +211,16 @@ def train_epoch(iter_cnt, encoders, classifier, train_loader_dst, args, optim_mo
                 batch4 = batch4.cuda()
 
         if args.base_model == "cnn":
-            _, hidden_from_dst_enc = encoder_dst(batch1, batch2)
+            _, hidden_from_dst_enc = encoder_dst(batch1, batch2, rsv_layer=args.n_tune)
         elif args.base_model == "rnn":
-            _, hidden_from_dst_enc = encoder_dst(batch1, batch2, batch3, batch4)
+            _, hidden_from_dst_enc = encoder_dst(batch1, batch2, batch3, batch4, rsv_layer=args.n_tune)
         else:
             raise NotImplementedError
 
         if args.base_model == "cnn":
-            _, cur_hidden = encoder_src(batch1, batch2)
+            _, cur_hidden = encoder_src(batch1, batch2, rsv_layer=args.n_tune)
         elif args.base_model == "rnn":
-            _, cur_hidden = encoder_src(batch1, batch2, batch3, batch4)
+            _, cur_hidden = encoder_src(batch1, batch2, batch3, batch4, rsv_layer=args.n_tune)
         else:
             raise NotImplementedError
         cur_output = classifier(cur_hidden)
@@ -252,8 +253,8 @@ def train_epoch(iter_cnt, encoders, classifier, train_loader_dst, args, optim_mo
 
 
 def train_single_domain_transfer(args, wf, src, repeat_seed):
-    tb_dir = 'runs/{}_sup_base_{}_source_{}_train_num_{}_{}'.format(
-        args.test, args.base_model, src, args.train_num, repeat_seed)
+    tb_dir = 'runs/{}_sup_base_{}_source_{}_train_num_{}_tune_{}_{}'.format(
+        args.test, args.base_model, src, args.train_num, args.n_tune, repeat_seed)
     if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
         shutil.rmtree(tb_dir)
     writer = SummaryWriter(tb_dir)
@@ -272,26 +273,28 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
 
     if args.base_model == "cnn":
         encoder_src = CNNMatchModel(input_matrix_size1=args.matrix_size1, input_matrix_size2=args.matrix_size2,
-                                      mat1_channel1=args.mat1_channel1, mat1_kernel_size1=args.mat1_kernel_size1,
-                                      mat1_channel2=args.mat1_channel2, mat1_kernel_size2=args.mat1_kernel_size2,
-                                      mat1_hidden=args.mat1_hidden, mat2_channel1=args.mat2_channel1,
-                                      mat2_kernel_size1=args.mat2_kernel_size1, mat2_hidden=args.mat2_hidden)
+                                    mat1_channel1=args.mat1_channel1, mat1_kernel_size1=args.mat1_kernel_size1,
+                                    mat1_channel2=args.mat1_channel2, mat1_kernel_size2=args.mat1_kernel_size2,
+                                    mat1_hidden=args.mat1_hidden, mat2_channel1=args.mat2_channel1,
+                                    mat2_kernel_size1=args.mat2_kernel_size1, mat2_hidden=args.mat2_hidden)
     elif args.base_model == "rnn":
         encoder_src = BiLSTM(pretrain_emb=pretrain_emb,
-                                   vocab_size=args.max_vocab_size,
-                                   embedding_size=args.embedding_size,
-                                   hidden_size=args.hidden_size,
-                                   dropout=args.dropout)
+                             vocab_size=args.max_vocab_size,
+                             embedding_size=args.embedding_size,
+                             hidden_size=args.hidden_size,
+                             dropout=args.dropout)
     else:
         raise NotImplementedError
     if args.cuda:
         encoder_src.load_state_dict(
             torch.load(os.path.join(src_model_dir,
-                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed))))
+                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num,
+                                                                                       repeat_seed))))
     else:
         encoder_src.load_state_dict(
             torch.load(os.path.join(src_model_dir,
-                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed)),
+                                    "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num,
+                                                                                       repeat_seed)),
                        map_location=torch.device('cpu')))
 
     dst_model_dir = os.path.join(settings.OUT_DIR, args.test)
@@ -312,7 +315,8 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
 
     encoder_dst_pretrain.load_state_dict(
         torch.load(os.path.join(dst_model_dir,
-                                "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num, repeat_seed))))
+                                "{}-match-best-now-train-num-{}-try-{}.mdl".format(args.base_model, args.train_num,
+                                                                                   repeat_seed))))
 
     # args = argparser.parse_args()
     say(args)
@@ -357,13 +361,20 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
 
     say("Corpus loaded.\n")
 
-    classifier = nn.Sequential(
-        nn.Linear(encoder_src.n_out, 64),
-        nn.ReLU(),
-        nn.Linear(64, 16),
-        nn.ReLU(),
-        nn.Linear(16, 2),
-    )
+    if args.n_tune == 3:
+        classifier = nn.Sequential(
+            nn.Linear(encoder_src.n_out, 64),
+            nn.ReLU(),
+            nn.Linear(64, 16),
+            nn.ReLU(),
+            nn.Linear(16, 2),
+        )
+    elif args.n_tune == 1:
+        classifier = nn.Sequential(nn.Linear(16, 2))
+    # elif args.n_tune == 0:
+    #     classifier = None
+    else:
+        raise NotImplementedError
 
     if args.cuda:
         encoder_dst_pretrain.cuda()
@@ -435,21 +446,22 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
             print("change val loss from {} to {}".format(min_loss_val, metrics_val[0]))
             min_loss_val = metrics_val[0]
             best_test_results = metrics_test
-            torch.save(classifier, os.path.join(model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
-                args.test, args.base_model, cur_src_idx, args.train_num, repeat_seed
-            )))
-
+            torch.save(classifier,
+                       os.path.join(model_dir, "{}_{}_classifier_from_src_{}_train_num_{}_try_{}.mdl".format(
+                           args.test, args.base_model, cur_src_idx, args.train_num, repeat_seed
+                       )))
 
     print()
-    print("src: {}, min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-        src, min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
-                              best_test_results[4] * 100
-            ))
+    print(
+        "src: {}, min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            src, min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
+                               best_test_results[4] * 100
+        ))
 
     wf.write(
         "from src {}, min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
             src, min_loss_val, best_test_results[1] * 100, best_test_results[2] * 100, best_test_results[3] * 100,
-                          best_test_results[4] * 100
+                               best_test_results[4] * 100
         ))
     writer.close()
 
@@ -458,8 +470,8 @@ def train_single_domain_transfer(args, wf, src, repeat_seed):
 
 def train(args):
     model_dir = os.path.join(settings.OUT_DIR, args.test)
-    wf = open(os.path.join(model_dir, "{}_{}_single_domain_trans_train_num_{}_results.txt".format(
-        args.test, args.base_model, args.train_num)), "w")
+    wf = open(os.path.join(model_dir, "{}_{}_single_domain_trans_train_num_{}_tune_{}_results.txt".format(
+        args.test, args.base_model, args.train_num, args.n_tune)), "w")
     test_idx = source_to_idx[args.test]
     for src in sources_all:
         min_loss_val_list = []
@@ -474,10 +486,11 @@ def train(args):
         test_auc_mean = np.mean(test_results_list[:, 0])
         test_prec_mean = np.mean(test_results_list[:, 1])
         test_rec_mean = np.mean(test_results_list[:, 2])
-        test_f1_mean = 2*test_prec_mean*test_rec_mean/(test_prec_mean+test_rec_mean)
-        wf.write("from src {}, avg min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
-            src, mean_val_loss, test_auc_mean*100, test_prec_mean*100, test_rec_mean*100, test_f1_mean*100
-        ))
+        test_f1_mean = 2 * test_prec_mean * test_rec_mean / (test_prec_mean + test_rec_mean)
+        wf.write(
+            "from src {}, avg min valid loss {:.4f}, best test metrics: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+                src, mean_val_loss, test_auc_mean * 100, test_prec_mean * 100, test_rec_mean * 100, test_f1_mean * 100
+            ))
         wf.flush()
         wf.write("\n")
     wf.write(json.dumps(vars(args)) + "\n")

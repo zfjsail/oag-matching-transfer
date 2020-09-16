@@ -40,7 +40,7 @@ class CNNMatchModel(nn.Module):
             nn.Linear(16, 2),
         )
 
-    def forward(self, batch_matrix1, batch_matrix2, ret_out=False):
+    def forward(self, batch_matrix1, batch_matrix2, ret_out=False, rsv_layer=3):
         batch_matrix1 = batch_matrix1.unsqueeze(1)
         batch_matrix2 = batch_matrix2.unsqueeze(1)
 
@@ -55,7 +55,20 @@ class CNNMatchModel(nn.Module):
 
         hidden = torch.cat((mat1, mat2), 1)
         out = self.fc_out(hidden)
-        return F.log_softmax(out, dim=1), hidden
+
+        if rsv_layer == 3:
+            out_hidden = hidden
+        elif rsv_layer == 1:
+            hiddens = []
+            x = hidden
+            for layer in self.fc_out:
+                x = layer(x)
+                hiddens.append(x)
+            out_hidden = x[-2]
+        else:
+            raise NotImplementedError
+
+        return F.log_softmax(out, dim=1), out_hidden
 
     @staticmethod
     def add_config(cfgparser):

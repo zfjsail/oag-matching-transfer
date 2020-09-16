@@ -36,7 +36,7 @@ class BiLSTM(nn.Module):
         )
         self.output_final = nn.Linear(16, 2)
 
-    def forward(self, mag, aminer, keyword_mag, keyword_aminer):
+    def forward(self, mag, aminer, keyword_mag, keyword_aminer, rsv_layer=3):
         mag = self.embed_seq(mag)
         aminer = self.embed_seq(aminer)
         keyword_mag = self.embed_keyword_seq(keyword_mag)
@@ -63,4 +63,12 @@ class BiLSTM(nn.Module):
 
         output_hidden = self.output(concat_input)
         output = self.output_final(output_hidden)
-        return torch.log_softmax(output, dim=1), concat_input
+
+        if rsv_layer == 3:
+            out_hidden_ret = concat_input
+        elif rsv_layer == 1:
+            out_hidden_ret = output_hidden
+        else:
+            raise NotImplementedError
+
+        return torch.log_softmax(output, dim=1), out_hidden_ret
