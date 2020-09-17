@@ -64,7 +64,7 @@ class CNNMatchModel(nn.Module):
             for layer in self.fc_out:
                 x = layer(x)
                 hiddens.append(x)
-            out_hidden = x[-2]
+            out_hidden = hiddens[-2]
         else:
             raise NotImplementedError
 
