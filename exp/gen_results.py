@@ -152,6 +152,66 @@ def gen_single_train_results():
             gen_mean_train_results(dst, bm)
 
 
+def gen_single_trans_last_3_mean_for_one(dst, base_model, idx):
+    model_dir = os.path.join(settings.OUT_DIR, dst)
+    with open(os.path.join(model_dir, "{}_{}_single_domain_trans_train_num_{}_results.txt".format(
+        dst, base_model, None)), "r") as rf:
+
+        val_losses = []
+        auc_list = []
+        prec_list = []
+        rec_list = []
+        src_list = []
+
+        for i, line in enumerate(rf):
+            line = line.strip()
+            if "avg min" in line:
+                items = line.split(",")
+                if len(src_list) == idx:
+                    continue
+                cur_src = items[0].split()[-1]
+                n_start_val_loss = len(" avg min valid loss ")
+                val_loss = float(items[1][n_start_val_loss:])
+                cur_auc = float(items[2].split(":")[-1][1:])
+                cur_prec = float(items[3].split(":")[-1][1:])
+                cur_rec = float(items[4].split(":")[-1][1:])
+                cur_f1 = float(items[5].split(":")[-1][1:])
+                val_losses.append(val_loss)
+                auc_list.append(cur_auc)
+                prec_list.append(cur_prec)
+                rec_list.append(cur_rec)
+                src_list.append(cur_src)
+    val_losses = np.array(val_losses)
+    prec_list = np.array(prec_list)
+    rec_list = np.array(rec_list)
+    auc_list = np.array(auc_list)
+
+    assert len(val_losses) == 3
+
+    val_loss_mean = np.mean(val_losses)
+    prec_mean = np.mean(prec_list)
+    rec_mean = np.mean(rec_list)
+    f1_mean = 2 * prec_mean * rec_mean / (prec_mean + rec_mean)
+    auc_mean = np.mean(auc_list)
+
+    with open(os.path.join(model_dir, "{}_{}_single_trans_last_3_avg_results.txt".format(
+        dst, base_model)), "w") as wf:
+        wf.write("val loss mean: {:.4f}\n".format(val_loss_mean))
+        wf.write("test results: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            auc_mean, prec_mean, rec_mean, f1_mean
+        ))
+
+
+def gen_single_trans_last_3_avg_results():
+    dst_range = ["aff", "author", "paper", "venue"]
+    base_models = ["cnn", "rnn"]
+
+    for i in range(len(dst_range)):
+        for bm in base_models:
+            gen_single_trans_last_3_mean_for_one(dst_range[i], bm, i)
+
+
 if __name__ == "__main__":
     # gen_all_avg_results()
-    gen_single_train_results()
+    # gen_single_train_results()
+    gen_single_trans_last_3_avg_results()
