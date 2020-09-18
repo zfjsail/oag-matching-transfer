@@ -162,13 +162,16 @@ def gen_single_trans_last_3_mean_for_one(dst, base_model, idx):
         prec_list = []
         rec_list = []
         src_list = []
+        n_hit = 0
 
         for i, line in enumerate(rf):
             line = line.strip()
             if "avg min" in line:
                 items = line.split(",")
-                if len(src_list) == idx:
+                if n_hit == idx:
+                    n_hit += 1
                     continue
+                n_hit += 1
                 cur_src = items[0].split()[-1]
                 n_start_val_loss = len(" avg min valid loss ")
                 val_loss = float(items[1][n_start_val_loss:])
