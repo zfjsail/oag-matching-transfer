@@ -4,7 +4,7 @@ from torch import nn
 
 class BiLSTM(nn.Module):
     def __init__(self, vocab_size, pretrain_emb, embedding_size=128, hidden_size=32, dropout=0.2,
-                 multiple=0):
+                 multiple=0, use_seq_num=2):
         super(BiLSTM, self).__init__()
         self.vocab_size = vocab_size
         self.multiple = multiple
@@ -34,6 +34,16 @@ class BiLSTM(nn.Module):
             nn.Linear(64, 16),
             nn.ReLU()
         )
+
+        self.output_for_one_seq = nn.Sequential(
+            nn.Linear(3 * hidden_size + 3 * multiple, 64),
+            nn.ReLU(),
+            nn.Linear(64, 16),
+            nn.ReLU()
+        )
+
+        self.use_seq_num = use_seq_num
+
         self.output_final = nn.Linear(16, 2)
 
     def forward(self, mag, aminer, keyword_mag, keyword_aminer, rsv_layer=3):
@@ -52,16 +62,24 @@ class BiLSTM(nn.Module):
         keyword_aminer, _ = self.lstm_key_seq2(keyword_aminer)
         minus = keyword_mag[:, -1, :] - keyword_aminer[:, -1, :]
         minus_key = mag[:, -1, :] - aminer[:, -1, :]
-        concat_input = torch.cat(
-            (minus,
-             minus_key,
+
+        if self.use_seq_num == 2:
+            concat_input = torch.cat(
+                (minus,
+                 minus_key,
+                 mag[:, -1, :],
+                 aminer[:, -1, :],
+                 keyword_mag[:, -1, :],
+                 keyword_aminer[:, -1, :],
+                 ), dim=1)
+            output_hidden = self.output(concat_input)
+        else:
+            concat_input = torch.cat(
+            (minus_key,
              mag[:, -1, :],
              aminer[:, -1, :],
-             keyword_mag[:, -1, :],
-             keyword_aminer[:, -1, :],
              ), dim=1)
-
-        output_hidden = self.output(concat_input)
+            output_hidden = self.output_for_one_seq(concat_input)
         output = self.output_final(output_hidden)
 
         if rsv_layer == 3:

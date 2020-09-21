@@ -53,7 +53,8 @@ parser.add_argument('--entity-type', type=str, default="venue", help="entity typ
 
 parser.add_argument('--check-point', type=int, default=3, help="Check point")
 parser.add_argument('--multiple', type=int, default=16, help="decide how many times to multiply a scalar input")
-parser.add_argument('--n-try', type=int, default=10, help="Repeat Times")
+parser.add_argument('--n-try', type=int, default=1, help="Repeat Times")
+parser.add_argument('--n-seq', type=int, default=1, help="Repeat Times")
 
 args = parser.parse_args()
 
@@ -184,7 +185,8 @@ def train_one_time(args, wf, repeat_seed):
                    pretrain_emb=pretrain_emb,
                    embedding_size=args.embedding_size,
                    hidden_size=args.hidden_size,
-                   dropout=args.dropout)
+                   dropout=args.dropout,
+                   use_seq_num=args.n_seq)
     print(model)
     n_paras = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print("number of paras:", n_paras)
