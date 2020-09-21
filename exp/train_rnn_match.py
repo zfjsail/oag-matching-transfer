@@ -152,7 +152,7 @@ def train(epoch, train_loader, valid_loader, test_loader, model, optimizer, writ
 
 
 def train_one_time(args, wf, repeat_seed):
-    tb_dir = 'runs/{}_rnn_train_ratio_{}_{}'.format(args.entity_type, args.train_num, repeat_seed)
+    tb_dir = 'runs/{}_rnn_train_ratio_{}_n_seq_{}_{}'.format(args.entity_type, args.train_num, args.n_seq, repeat_seed)
     if os.path.exists(tb_dir) and os.path.isdir(tb_dir):
         shutil.rmtree(tb_dir)
     writer = SummaryWriter(tb_dir)
