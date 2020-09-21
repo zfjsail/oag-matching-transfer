@@ -232,7 +232,7 @@ def train_one_time(args, wf, repeat_seed):
 
 def main(args):
     model_dir = join(settings.OUT_DIR, args.entity_type)
-    wf = open(join(model_dir, "{}_rnn_train_num_{}_results.txt".format(args.entity_type, args.train_num)), "w")
+    wf = open(join(model_dir, "{}_rnn_train_num_{}_results_n_seq_{}.txt".format(args.entity_type, args.train_num, args.n_seq)), "w")
     for t in range(args.n_try):
         train_one_time(args, wf, t)
         wf.flush()

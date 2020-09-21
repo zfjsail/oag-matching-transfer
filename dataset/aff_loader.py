@@ -44,7 +44,9 @@ class AffCNNMatchDataset(Dataset):
         print("add pairs", len(pairs_add))
         pos_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "1"]
         neg_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "0"]
+        pos_pairs = pos_pairs[-len(neg_pairs):]
         labels = [1] * len(pos_pairs) + [0] * len(neg_pairs)
+        print("n_pos", len(pos_pairs), "n_neg", len(neg_pairs))
         pairs = pos_pairs + neg_pairs  # label balanced is important
 
         n_matrix = len(pairs)
@@ -184,7 +186,9 @@ class AffRNNMatchDataset(Dataset):
         pos_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "1"]
         neg_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "0"]
 
+        pos_pairs = pos_pairs[-len(neg_pairs):]
         self.labels = [1] * len(pos_pairs) + [0] * len(neg_pairs)
+        print("n_pos", len(pos_pairs), "n_neg", len(neg_pairs))
         pairs = pos_pairs + neg_pairs  # label balanced is important
 
         t = data_utils.load_large_obj(settings.OUT_DIR, "tokenizer_all_domain.pkl")
