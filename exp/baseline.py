@@ -401,6 +401,92 @@ def gen_aff_record_linkage_table():
     data_utils.dump_json(test_pairs, out_dir, "test_aff_dedupe_pairs.json")
 
 
+def gen_venue_record_linkage_table():
+    pairs = load_venue_data()
+    train_num = 800
+    test_num = 200
+
+    n_pos_set = int((train_num + 2 * test_num) / 2)
+
+    neg_pairs = [p for p in pairs if p[0] == 0]
+    pos_pairs = [p for p in pairs if p[0] == 1][-n_pos_set:]
+    n_pos = len(pos_pairs)
+    neg_pairs = neg_pairs[-n_pos:]
+    train_data = pos_pairs + neg_pairs
+
+    train_data = sklearn.utils.shuffle(train_data, random_state=37)
+
+    labels = [x[0] for x in train_data]
+
+    # n = len(pairs)
+    n_train = train_num
+    n_valid = test_num
+    aff_to_aid = {}
+    cur_idx = 0
+    # table1_aff = []
+    # table2_aff = []
+    out_dir = join(settings.OUT_DIR, "venue")
+    wf1 = open(join(out_dir, "venue_train1.csv"), "w")
+    wf2 = open(join(out_dir, "venue_train2.csv"), "w")
+    wf1.write("name,main_body,uid\n")
+    wf2.write("name,main_body,uid\n")
+    test_pairs = []
+    valid_pairs = []
+    neg_cnt = 0
+    # an = addressNormalization()
+    for i, p in enumerate(train_data):
+        # aff1_short = an.find_inst(p[0]["name"])[1].lower().replace(",", " ")
+        aff1 = p[2].lower().replace(",", " ")
+        # aff2_short = an.find_inst(p[1]["DisplayName"])[1].lower()
+        aff2 = p[1].lower().replace(",", " ")
+        label = labels[i]
+        # if aff2 in aff_to_aid:
+        #     continue
+        if label == 1:
+            aff_to_aid[aff2] = cur_idx
+            aff_to_aid[aff1] = cur_idx
+            cur_idx += 1
+        else:
+            aff_to_aid[aff2] = cur_idx
+            aff_to_aid[aff1] = cur_idx + 1
+            cur_idx += 2
+
+        cur_v_mag = aff1.split()
+        cur_v_aminer = aff2.split()
+        overlap = set(cur_v_mag).intersection(cur_v_aminer)
+        new_seq_mag = []
+        new_seq_aminer = []
+        for w in cur_v_mag:
+            if w in overlap:
+                new_seq_mag.append(w)
+        for w in cur_v_aminer:
+            if w in overlap:
+                new_seq_aminer.append(w)
+
+        if i < n_train:
+            wf1.write(aff1 + "," + " ".join(new_seq_mag) + "," + str(aff_to_aid[aff1]) + "\n")
+            wf2.write(aff2 + "," + " ".join(new_seq_aminer) + "," + str(aff_to_aid[aff2]) + "\n")
+        elif i < n_train + n_valid:
+            valid_pairs.append(
+                ({"name": aff1, "main_body": " ".join(new_seq_mag), "uid": str(aff_to_aid[aff1])},
+                 {"name": aff2, "main_body": " ".join(new_seq_aminer), "uid": str(aff_to_aid[aff2])})
+            )
+        else:
+            test_pairs.append(
+                ({"name": aff1, "main_body": " ".join(new_seq_mag), "uid": str(aff_to_aid[aff1])},
+                 {"name": aff2, "main_body": " ".join(new_seq_aminer), "uid": str(aff_to_aid[aff2])})
+            )
+            if aff_to_aid[aff1] != aff_to_aid[aff2]:
+                neg_cnt += 1
+    wf1.close()
+    wf2.close()
+
+    print(len(test_pairs), neg_cnt)
+
+    data_utils.dump_json(test_pairs, out_dir, "valid_venue_dedupe_pairs.json")
+    data_utils.dump_json(test_pairs, out_dir, "test_venue_dedupe_pairs.json")
+
+
 if __name__ == "__main__":
     # pairs, _ = load_aff_data()
     # fit_tfidf_for_aff()
@@ -409,4 +495,5 @@ if __name__ == "__main__":
     # gen_aff_record_linkage_table()
     # fit_tfidf_for_venue()
     # venue_keyword_method()
-    venue_svm()
+    # venue_svm()
+    gen_venue_record_linkage_table()

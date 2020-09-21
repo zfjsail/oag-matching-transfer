@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')  # inc
 
 class AuthorCNNMatchDataset(Dataset):
 
-    def __init__(self, file_dir, matrix_size1, matrix_size2, seed, shuffle, args, use_emb=True):
+    def __init__(self, file_dir, matrix_size1, matrix_size2, seed, shuffle, args, use_emb=True, all_train=False):
         self.file_dir = file_dir
         self.matrix_title_size = matrix_size1
         self.matrix_author_size = matrix_size2
@@ -77,9 +77,14 @@ class AuthorCNNMatchDataset(Dataset):
 
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
-        valid_start = 800
-        test_start = 200 + valid_start
-        end_point = 200 + test_start
+        if all_train:
+            valid_start = 10000
+            test_start = 5000 + valid_start
+            end_point = 5000 + test_start
+        else:
+            valid_start = 800
+            test_start = 200 + valid_start
+            end_point = 200 + test_start
 
         train_data = {}
         train_data["x1"] = self.X_long[:valid_start]
@@ -155,7 +160,7 @@ class AuthorCNNMatchDataset(Dataset):
 
 class AuthorRNNMatchDataset(Dataset):
 
-    def __init__(self, file_dir, max_seq1_len, max_seq2_len, shuffle, seed, args):
+    def __init__(self, file_dir, max_seq1_len, max_seq2_len, shuffle, seed, args, all_train=False):
 
         self.max_seq1_len = max_seq1_len
         self.max_seq2_len = max_seq2_len
@@ -209,9 +214,14 @@ class AuthorRNNMatchDataset(Dataset):
 
         # valid_start = int(self.N * args.train_ratio / 100)
         # test_start = int(self.N * (args.train_ratio + args.valid_ratio) / 100)
-        valid_start = 800
-        test_start = 200 + valid_start
-        end_point = 200 + test_start
+        if all_train:
+            valid_start = 10000
+            test_start = 5000 + valid_start
+            end_point = 5000 + test_start
+        else:
+            valid_start = 800
+            test_start = 200 + valid_start
+            end_point = 200 + test_start
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:valid_start]
@@ -259,5 +269,5 @@ if __name__ == '__main__':
     parser.add_argument('--max-key-sequence-length', type=int, default=8,
                         help="Max key sequence length for key sequences")
     args = parser.parse_args()
-    dataset = AuthorCNNMatchDataset(file_dir=args.file_dir, matrix_size1=args.matrix_size1, matrix_size2=args.matrix_size2, seed=args.seed, shuffle=True, args=args, use_emb=False)
-    dataset = AuthorRNNMatchDataset(args.file_dir, args.max_sequence_length, args.max_key_sequence_length, shuffle=True, seed=args.seed, args=args)
+    dataset = AuthorCNNMatchDataset(file_dir=args.file_dir, matrix_size1=args.matrix_size1, matrix_size2=args.matrix_size2, seed=args.seed, shuffle=True, args=args, use_emb=False, all_train=True)
+    dataset = AuthorRNNMatchDataset(args.file_dir, args.max_sequence_length, args.max_key_sequence_length, shuffle=True, seed=args.seed, args=args, all_train=True)
