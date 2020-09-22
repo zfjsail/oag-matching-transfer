@@ -28,6 +28,7 @@ def load_aff_data():
     print("add pairs", len(pairs_add))
     pos_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "1"]
     neg_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "0"]
+    pos_pairs = pos_pairs[-len(neg_pairs):]
     labels = [1] * len(pos_pairs) + [0] * len(neg_pairs)
     pairs = pos_pairs + neg_pairs  # label balanced is important
     return pairs, labels
@@ -492,8 +493,8 @@ if __name__ == "__main__":
     # fit_tfidf_for_aff()
     # aff_keyword_method()
     # aff_svm()
-    # gen_aff_record_linkage_table()
+    gen_aff_record_linkage_table()
     # fit_tfidf_for_venue()
     # venue_keyword_method()
     # venue_svm()
-    gen_venue_record_linkage_table()
+    # gen_venue_record_linkage_table()

@@ -44,7 +44,7 @@ class AffCNNMatchDataset(Dataset):
         print("add pairs", len(pairs_add))
         pos_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "1"]
         neg_pairs += [(p['aminer_affi'], p['mag_affi']) for p in pairs_add if p["label_zfj"] == "0"]
-        pos_pairs = pos_pairs[-len(neg_pairs):]
+        pos_pairs = pos_pairs[-len(neg_pairs):]  # no balance for relation exp part
         labels = [1] * len(pos_pairs) + [0] * len(neg_pairs)
         print("n_pos", len(pos_pairs), "n_neg", len(neg_pairs))
         pairs = pos_pairs + neg_pairs  # label balanced is important
@@ -77,12 +77,12 @@ class AffCNNMatchDataset(Dataset):
 
         N = self.N
 
-        # n_train = int(self.N*0.6)
-        # n_valid = int(self.N*0.2)
-        # n_test = N - n_train - n_valid
-        n_train = 800
-        n_valid = 200
-        n_test = 200
+        n_train = int(self.N*0.6)
+        n_valid = int(self.N*0.2)
+        n_test = N - n_train - n_valid
+        # n_train = 800
+        # n_valid = 200
+        # n_test = 200
 
         train_data = {}
         train_data["x1"] = self.X_long[:n_train]
@@ -223,9 +223,9 @@ class AffRNNMatchDataset(Dataset):
         n_valid = int(self.N*0.2)
         n_test = N - n_train - n_valid
 
-        n_train = 800
-        n_valid = 200
-        n_test = 200
+        # n_train = 800
+        # n_valid = 200
+        # n_test = 200
 
         train_data = {}
         train_data["x1_seq1"] = self.mag[:n_train]
