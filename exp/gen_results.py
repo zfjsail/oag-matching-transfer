@@ -397,4 +397,5 @@ if __name__ == "__main__":
     # gen_single_trans_last_3_avg_results()
     # gen_single_trans_last_1_avg_results()
     # gen_direct_trans_avg_results()
-    gen_ab_study_avg_results()
+    # gen_ab_study_avg_results()
+    gen_mean_train_results("aff", "cnn")
