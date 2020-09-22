@@ -311,6 +311,51 @@ def gen_single_trans_direct_for_one(dst, base_model, idx):
         ))
 
 
+def gen_single_train_rnn_for_one(dst, n_seq):
+    model_dir = os.path.join(settings.OUT_DIR, dst)
+    with open(os.path.join(model_dir, "{}_rnn_train_num_None_results_n_seq_{}.txt".format(
+        dst,  n_seq)), "r") as rf:
+
+        val_losses = []
+        auc_list = []
+        prec_list = []
+        rec_list = []
+
+        for i, line in enumerate(rf):
+            line = line.strip()
+            if line.startswith("min"):
+                items = line.split(",")
+                n_start_val_loss = len("min valid loss ")
+                val_loss = float(items[0][n_start_val_loss:])
+                cur_auc = float(items[1].split(":")[-1][1:])
+                cur_prec = float(items[2].split(":")[-1][1:])
+                cur_rec = float(items[3].split(":")[-1][1:])
+                cur_f1 = float(items[4].split(":")[-1][1:])
+                val_losses.append(val_loss)
+                auc_list.append(cur_auc)
+                prec_list.append(cur_prec)
+                rec_list.append(cur_rec)
+    val_losses = np.array(val_losses)
+    prec_list = np.array(prec_list)
+    rec_list = np.array(rec_list)
+    auc_list = np.array(auc_list)
+
+    assert len(val_losses) == 10
+
+    val_loss_mean = np.mean(val_losses)
+    prec_mean = np.mean(prec_list)
+    rec_mean = np.mean(rec_list)
+    f1_mean = 2 * prec_mean * rec_mean / (prec_mean + rec_mean)
+    auc_mean = np.mean(auc_list)
+
+    with open(os.path.join(model_dir, "{}_rnn_train_n_seq_{}_avg_results.txt".format(
+        dst, n_seq)), "w") as wf:
+        wf.write("val loss mean: {:.4f}\n".format(val_loss_mean))
+        wf.write("test results: AUC: {:.2f}, Prec: {:.2f}, Rec: {:.2f}, F1: {:.2f}\n".format(
+            auc_mean, prec_mean, rec_mean, f1_mean
+        ))
+
+
 def gen_single_trans_last_3_avg_results():
     dst_range = ["aff", "author", "paper", "venue"]
     base_models = ["cnn", "rnn"]
@@ -338,9 +383,18 @@ def gen_direct_trans_avg_results():
             gen_single_trans_direct_for_one(dst_range[i], bm, i)
 
 
+def gen_ab_study_avg_results():
+    n_seqs = [1, 2]
+    dst_range = ["aff"]
+    for dst in dst_range:
+        for n_seq in n_seqs:
+            gen_single_train_rnn_for_one(dst, n_seq)
+
+
 if __name__ == "__main__":
     # gen_all_avg_results()
     # gen_single_train_results()
     # gen_single_trans_last_3_avg_results()
     # gen_single_trans_last_1_avg_results()
-    gen_direct_trans_avg_results()
+    # gen_direct_trans_avg_results()
+    gen_ab_study_avg_results()
